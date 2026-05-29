@@ -1,0 +1,72 @@
+# Environment
+.env
+.env.*
+.env.local
+.env.*.local
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+*.egg
+
+# Alembic compiled
+api/migrations/versions/*.pyc
+
+# Node
+node_modules/
+.pnp
+.pnp.js
+
+# SvelteKit
+.svelte-kit/
+web/.svelte-kit/
+
+# Next.js
+.next/
+web/.next/
+out/
+web/out/
+
+# Build output
+web/build/
+web/dist/
+
+# Vercel
+.vercel/
+
+# Workbox / PWA
+workbox-*.js
+sw.js
+web/public/sw.js
+web/static/sw.js
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.nyc_output/
+coverage/
