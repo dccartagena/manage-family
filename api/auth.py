@@ -1,9 +1,16 @@
 import os
 import uuid
+from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import Header, HTTPException, status
 from jose import JWTError, jwt
+
+
+@dataclass(frozen=True)
+class PersonAuth:
+    person_id: uuid.UUID
+    email: str
 
 
 def _get_jwt_secret() -> str:
@@ -13,25 +20,19 @@ def _get_jwt_secret() -> str:
     return secret
 
 
-async def get_current_person(
-    authorization: Annotated[str | None, Header()] = None,
-) -> uuid.UUID:
-    """FastAPI dependency that extracts and validates a Supabase Bearer JWT.
-
-    Returns the person_id (sub claim) as a UUID.
-    Raises HTTP 401 on missing, expired, or invalid token.
-    """
+def _extract_bearer_token(authorization: str | None) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing or malformed Authorization header",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    return authorization.removeprefix("Bearer ")
 
-    token = authorization.removeprefix("Bearer ")
 
+def _decode_jwt(token: str) -> dict:
     try:
-        payload = jwt.decode(
+        return jwt.decode(
             token,
             _get_jwt_secret(),
             algorithms=["HS256"],
@@ -44,6 +45,14 @@ async def get_current_person(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
+
+async def get_person_auth(
+    authorization: Annotated[str | None, Header()] = None,
+) -> PersonAuth:
+    """FastAPI dependency returning person_id and email from a Supabase Bearer JWT."""
+    token = _extract_bearer_token(authorization)
+    payload = _decode_jwt(token)
+
     sub = payload.get("sub")
     if not sub:
         raise HTTPException(
@@ -53,10 +62,21 @@ async def get_current_person(
         )
 
     try:
-        return uuid.UUID(str(sub))
+        person_id = uuid.UUID(str(sub))
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token sub claim is not a valid UUID",
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
+
+    email = payload.get("email", "")
+    return PersonAuth(person_id=person_id, email=email)
+
+
+async def get_current_person(
+    authorization: Annotated[str | None, Header()] = None,
+) -> uuid.UUID:
+    """FastAPI dependency returning person_id UUID from a Supabase Bearer JWT."""
+    auth = await get_person_auth(authorization=authorization)
+    return auth.person_id

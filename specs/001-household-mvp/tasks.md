@@ -76,15 +76,15 @@
 
 ### Implementation for User Story 1
 
-- [ ] T018a [US1] Write failing API tests in `api/tests/test_person.py` — `POST /person/sync` creates Person row on first call and is idempotent on repeat; `PATCH /person/prefs` accepts valid `ui_prefs` keys; both return 401 without auth; write failing component test in `web/src/app/(auth)/__tests__/login.test.tsx` — email form renders and transitions to confirmation state on submit; all tests MUST fail before T019–T026 are implemented
-- [ ] T019 [US1] Create `web/src/app/(auth)/login/page.tsx` — email input form, call `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: '/auth/callback' } })`, transition to "Check your email" confirmation state after submit
-- [ ] T020 [US1] Create `web/src/app/(auth)/callback/route.ts` — GET route handler: extract `code` from URL params, call `supabase.auth.exchangeCodeForSession(code)`, call `POST /api/v1/person/sync` with Bearer token to upsert Person row, redirect to `/dashboard`
-- [ ] T021 [US1] Create `web/src/app/(auth)/error/page.tsx` — expired/invalid magic link error screen: clear message, "Request a new link" CTA navigating to `/login`; no technical jargon
-- [ ] T022 [US1] Implement `api/routers/person.py` — `POST /person/sync`: upsert Person row using `person_id` from JWT sub, `email` from JWT claims, `display_name` defaulting to email prefix; idempotent on repeated calls; return full person object
-- [ ] T023 [US1] Register person router at `/api/v1/person` in `api/main.py`; add `PATCH /person/prefs` to `api/routers/person.py` — update `ui_prefs` JSONB (text_size, contrast, reduce_motion, notification_batching) per `contracts/api.md §Person Preferences`
-- [ ] T024 [US1] Create `web/src/app/(auth)/settings/page.tsx` — display preferences UI: text size selector (normal/large/xlarge), contrast toggle, reduce-motion toggle; call `PATCH /api/v1/person/prefs` on each change; persist selection in session
-- [ ] T025 [P] [US1] Add contrast-mode CSS class stub in `web/src/app/globals.css` — `.contrast-high {}` placeholder; Tailwind safelist entry for `.contrast-high`; font-scale custom properties are owned by T072 — do not define here
-- [ ] T026 [US1] Wire session persistence: confirm `web/src/middleware.ts` passes active sessions through to `/dashboard` without re-auth; verify behavior on browser refresh and tab close/reopen
+- [X] T018a [US1] Write failing API tests in `api/tests/test_person.py` — `POST /person/sync` creates Person row on first call and is idempotent on repeat; `PATCH /person/prefs` accepts valid `ui_prefs` keys; both return 401 without auth; write failing component test in `web/src/app/(auth)/__tests__/login.test.tsx` — email form renders and transitions to confirmation state on submit; all tests MUST fail before T019–T026 are implemented
+- [X] T019 [US1] Create `web/src/app/(auth)/login/page.tsx` — email input form, call `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: '/auth/callback' } })`, transition to "Check your email" confirmation state after submit
+- [X] T020 [US1] Create `web/src/app/(auth)/callback/route.ts` — GET route handler: extract `code` from URL params, call `supabase.auth.exchangeCodeForSession(code)`, call `POST /api/v1/person/sync` with Bearer token to upsert Person row, redirect to `/dashboard`
+- [X] T021 [US1] Create `web/src/app/(auth)/error/page.tsx` — expired/invalid magic link error screen: clear message, "Request a new link" CTA navigating to `/login`; no technical jargon
+- [X] T022 [US1] Implement `api/routers/person.py` — `POST /person/sync`: upsert Person row using `person_id` from JWT sub, `email` from JWT claims, `display_name` defaulting to email prefix; idempotent on repeated calls; return full person object
+- [X] T023 [US1] Register person router at `/api/v1/person` in `api/main.py`; add `PATCH /person/prefs` to `api/routers/person.py` — update `ui_prefs` JSONB (text_size, contrast, reduce_motion, notification_batching) per `contracts/api.md §Person Preferences`
+- [X] T024 [US1] Create `web/src/app/(auth)/settings/page.tsx` — display preferences UI: text size selector (normal/large/xlarge), contrast toggle, reduce-motion toggle; call `PATCH /api/v1/person/prefs` on each change; persist selection in session
+- [X] T025 [P] [US1] Add contrast-mode CSS class stub in `web/src/app/globals.css` — `.contrast-high {}` placeholder; Tailwind safelist entry for `.contrast-high`; font-scale custom properties are owned by T072 — do not define here
+- [X] T026 [US1] Wire session persistence: confirm `web/src/middleware.ts` passes active sessions through to `/dashboard` without re-auth; verify behavior on browser refresh and tab close/reopen
 
 **Checkpoint**: US1 complete — authenticated access independently functional
 

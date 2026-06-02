@@ -3,6 +3,8 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.routers import person
+
 app = FastAPI(
     title="Household Manager API",
     version="0.1.0",
@@ -32,9 +34,10 @@ def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
-# Router stubs — imported and registered as each phase is implemented:
-# from api.routers import person, groups, invites, tasks, shopping, events, ical, reminders, jobs
-# app.include_router(person.router, prefix="/api/v1")
+app.include_router(person.router, prefix="/api/v1")
+
+# Router stubs — registered as each phase is implemented:
+# from api.routers import groups, invites, tasks, shopping, events, ical, reminders, jobs
 # app.include_router(groups.router, prefix="/api/v1")
 # app.include_router(invites.router, prefix="/api/v1")
 # app.include_router(tasks.router, prefix="/api/v1")
