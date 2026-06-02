@@ -40,6 +40,7 @@ Next.js 14 + Tailwind + shadcn/ui as an installable PWA. All persistence in Supa
 - Supabase free tier: 500 MB DB, 2 GB bandwidth, 50 MB file storage (not used)
 - External scheduler (cron-job.org) mandatory; Vercel free cron = once/day only
 - Non-commercial private use; app must stay within free-tier quotas
+- Headless API-first: FastAPI is the sole data gateway; frontend accesses all data through REST API only; direct Supabase DB queries from frontend prohibited (FR-023); Supabase Auth session management and Realtime subscriptions are approved infrastructure-level exceptions
 
 **Scale/Scope**: ~10–100 users, ~5–20 households, ≤5 levels of nesting, low hundreds of tasks/events
 
@@ -72,6 +73,7 @@ Next.js 14 + Tailwind + shadcn/ui as an installable PWA. All persistence in Supa
 | Notifications via iCal | ✅ PASS | Primary path; Web Push deferred out of MVP |
 | Accessibility build constraint | ✅ PASS | shadcn/Radix selected; FR-018 applied to every screen from day one |
 | Privacy by structure | ✅ PASS | RLS policies enforce local/rollup rules before any code ships |
+| Headless API-first | ✅ PASS | FR-023: FastAPI is sole data gateway; frontend REST-only; Supabase Auth + Realtime are approved infrastructure exceptions |
 
 **No violations → Complexity Tracking section omitted.**
 

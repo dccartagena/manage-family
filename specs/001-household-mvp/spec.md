@@ -188,7 +188,7 @@ core product question. Requires all other features to exist first.
 - **FR-004**: System MUST grant household membership to any user who opens a valid, unexpired invite link and completes authentication
 - **FR-005**: System MUST allow a single user to be a member of multiple independent household groups simultaneously, with each group's data kept separate
 - **FR-006**: System MUST support household groups nested under parent groups, representing multi-generational family structures up to five levels deep
-- **FR-007**: System MUST restrict task, shopping, and expense data to members of the owning household only; events and shared reminders MUST be visible to members of all ancestor groups
+- **FR-007**: System MUST restrict task and shopping data to members of the owning household only; events MUST be visible to members of all ancestor groups
 - **FR-008**: System MUST allow household members to create tasks with a title, optional assignee, and optional standard recurrence rule
 - **FR-009**: System MUST allow members to mark a task done or undone; recurring tasks MUST produce the next occurrence when marked done
 - **FR-010**: System MUST provide a shared shopping list per household where items can be added, checked, unchecked, and deleted; changes MUST be visible to all household members within 3 seconds
@@ -204,6 +204,7 @@ core product question. Requires all other features to exist first.
 - **FR-020**: When a group owner leaves a group that has other members, the system MUST automatically promote the longest-standing member to owner without interruption
 - **FR-021**: When the sole member of a group (who is also the owner) leaves, the system MUST permanently delete the group and all associated data, after presenting a clear confirmation warning
 - **FR-022**: When a member is removed from a household, all tasks assigned to that member MUST have their assignee field cleared; the tasks themselves MUST remain, becoming unassigned
+- **FR-023**: The backend API MUST be designed as a headless, framework-agnostic service: all business logic and data persistence is owned by the FastAPI application; the frontend MUST access data exclusively through the REST API defined in `contracts/api.md`; direct Supabase database table queries from frontend code are prohibited; Supabase Auth session management and Supabase Realtime subscriptions are permitted as approved infrastructure-level exceptions
 
 ### Key Entities
 
@@ -243,3 +244,4 @@ core product question. Requires all other features to exist first.
 - The app is for private, non-commercial, extended-family use only
 - Two roles are sufficient: owner (group creator, manages membership) and member (all other authenticated household members); no guest or read-only role is needed
 - Password-based login is not offered; magic links are the sole authentication method
+- Future (pre-due) reminders are included in the user's iCal feed immediately upon creation as VEVENT entries so they appear in the subscribed calendar app ahead of the scheduled time; the VALARM component fires at `fire_at`; only reminders with `delivered=TRUE` are shown as 'Delivered' in the reminder list view
