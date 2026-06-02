@@ -1,0 +1,45 @@
+import os
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(
+    title="Household Manager API",
+    version="0.1.0",
+    docs_url="/docs",
+    openapi_url="/openapi.json",
+)
+
+_vercel_domain = os.environ.get("VERCEL_URL", "")
+_allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+]
+if _vercel_domain:
+    _allowed_origins.append(f"https://{_vercel_domain}")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/health")
+def health_check() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+# Router stubs — imported and registered as each phase is implemented:
+# from api.routers import person, groups, invites, tasks, shopping, events, ical, reminders, jobs
+# app.include_router(person.router, prefix="/api/v1")
+# app.include_router(groups.router, prefix="/api/v1")
+# app.include_router(invites.router, prefix="/api/v1")
+# app.include_router(tasks.router, prefix="/api/v1")
+# app.include_router(shopping.router, prefix="/api/v1")
+# app.include_router(events.router, prefix="/api/v1")
+# app.include_router(ical.router, prefix="/api/v1")
+# app.include_router(reminders.router, prefix="/api/v1/reminders")
+# app.include_router(jobs.router, prefix="/api/v1/jobs")

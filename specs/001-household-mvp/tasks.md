@@ -35,14 +35,14 @@
 
 **Purpose**: Project initialization and directory structure
 
-- [ ] T001 Create directory skeleton: `api/`, `api/routers/`, `api/migrations/versions/`, `api/tests/`, `web/src/app/(auth)/`, `web/src/app/dashboard/`, `web/src/app/groups/`, `web/src/app/tasks/`, `web/src/app/shopping/`, `web/src/app/events/`, `web/src/app/reminders/`, `web/src/components/`, `web/src/lib/`, `web/public/` per plan.md project structure
-- [ ] T002 Configure `pyproject.toml` — Python 3.12 project metadata; deps: fastapi, sqlmodel, alembic, supabase, python-jose[cryptography], python-dateutil, recurring-ical-events, icalendar, psycopg2-binary; dev deps: pytest, httpx, ruff, black
-- [ ] T003 [P] Configure `web/package.json` — Next.js 14, @supabase/supabase-js, @supabase/ssr, tailwindcss, all shadcn/ui deps, workbox-cli, vitest, @testing-library/react
-- [ ] T004 [P] Configure `web/next.config.ts`, `web/tailwind.config.ts`, `web/tsconfig.json` — TypeScript strict mode, Tailwind content paths covering `web/src/**/*.{ts,tsx}`
-- [ ] T005 [P] Create `vercel.json` — route `/api/*` to FastAPI serverless function (`api/main.py`), route `/*` to Next.js; ensures clear frontend/backend boundary at the routing layer
-- [ ] T006 [P] Create `api/.env.example` (DATABASE_URL, DATABASE_POOL_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET, SCHEDULER_SECRET, APP_TIMEZONE) and `web/.env.local.example` (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL)
-- [ ] T007 [P] Configure `web/.eslintrc.json` and `web/.prettierrc` — TypeScript + React rules, Tailwind class sorting plugin
-- [ ] T008 [P] Initialize FastAPI app in `api/main.py` — `FastAPI(title="Household Manager API", docs_url="/docs", openapi_url="/openapi.json")` so OpenAPI schema is auto-available at `/api/v1/docs` and `/api/v1/openapi.json` for any headless client; `GET /health` returning `{"status":"ok"}`; CORS middleware for Vercel domain; router import stubs (one per routers/ file)
+- [X] T001 Create directory skeleton: `api/`, `api/routers/`, `api/migrations/versions/`, `api/tests/`, `web/src/app/(auth)/`, `web/src/app/dashboard/`, `web/src/app/groups/`, `web/src/app/tasks/`, `web/src/app/shopping/`, `web/src/app/events/`, `web/src/app/reminders/`, `web/src/components/`, `web/src/lib/`, `web/public/` per plan.md project structure
+- [X] T002 Configure `pyproject.toml` — Python 3.12 project metadata; deps: fastapi, sqlmodel, alembic, supabase, python-jose[cryptography], python-dateutil, recurring-ical-events, icalendar, psycopg2-binary; dev deps: pytest, httpx, ruff, black
+- [X] T003 [P] Configure `web/package.json` — Next.js 14, @supabase/supabase-js, @supabase/ssr, tailwindcss, all shadcn/ui deps, workbox-cli, vitest, @testing-library/react
+- [X] T004 [P] Configure `web/next.config.ts`, `web/tailwind.config.ts`, `web/tsconfig.json` — TypeScript strict mode, Tailwind content paths covering `web/src/**/*.{ts,tsx}`
+- [X] T005 [P] Create `vercel.json` — route `/api/*` to FastAPI serverless function (`api/main.py`), route `/*` to Next.js; ensures clear frontend/backend boundary at the routing layer
+- [X] T006 [P] Create `api/.env.example` (DATABASE_URL, DATABASE_POOL_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET, SCHEDULER_SECRET, APP_TIMEZONE) and `web/.env.local.example` (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL)
+- [X] T007 [P] Configure `web/.eslintrc.json` and `web/.prettierrc` — TypeScript + React rules, Tailwind class sorting plugin
+- [X] T008 [P] Initialize FastAPI app in `api/main.py` — `FastAPI(title="Household Manager API", docs_url="/docs", openapi_url="/openapi.json")` so OpenAPI schema is auto-available at `/api/v1/docs` and `/api/v1/openapi.json` for any headless client; `GET /health` returning `{"status":"ok"}`; CORS middleware for Vercel domain; router import stubs (one per routers/ file)
 
 ---
 
