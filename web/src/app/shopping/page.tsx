@@ -111,13 +111,13 @@ export default function ShoppingPage() {
     const { eventType, new: newRecord, old: oldRecord } = payload;
 
     if (eventType === "INSERT" && newRecord) {
-      const inserted = newRecord as ShoppingItem;
+      const inserted = newRecord as unknown as ShoppingItem;
       setItems((prev) => {
         if (prev.some((i) => i.id === inserted.id)) return prev;
         return [...prev, inserted];
       });
     } else if (eventType === "UPDATE" && newRecord) {
-      const updated = newRecord as ShoppingItem;
+      const updated = newRecord as unknown as ShoppingItem;
       setItems((prev) =>
         prev.map((i) => (i.id === updated.id ? updated : i)),
       );

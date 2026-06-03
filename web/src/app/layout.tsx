@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import Script from "next/script";
 import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { createAuthServerClient } from "@/lib/supabase";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -59,6 +60,7 @@ export default async function RootLayout({
       <body>
         <main className="pb-16">{children}</main>
         <BottomNav />
+        <InstallPrompt />
         <Script id="sw-register" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {

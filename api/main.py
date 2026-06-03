@@ -8,8 +8,8 @@ from api.routers import dashboard, events, groups, ical, invites, jobs, person, 
 app = FastAPI(
     title="Household Manager API",
     version="0.1.0",
-    docs_url="/docs",
-    openapi_url="/openapi.json",
+    docs_url="/api/v1/docs",
+    openapi_url="/api/v1/openapi.json",
 )
 
 _vercel_domain = os.environ.get("VERCEL_URL", "")

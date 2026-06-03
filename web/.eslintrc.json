@@ -1,22 +1,14 @@
 {
   "extends": [
     "next/core-web-vitals",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:tailwindcss/recommended"
+    "plugin:@typescript-eslint/recommended"
   ],
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "tailwindcss"],
+  "plugins": ["@typescript-eslint"],
   "rules": {
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports" }],
-    "tailwindcss/classnames-order": "warn",
-    "tailwindcss/no-custom-classname": "off"
-  },
-  "settings": {
-    "tailwindcss": {
-      "config": "tailwind.config.ts"
-    }
+    "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports" }]
   }
 }

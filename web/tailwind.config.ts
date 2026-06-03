@@ -55,6 +55,9 @@ const config: Config = {
     "text-amber-600",
     "border-amber-400",
     "border-amber-500",
+    "text-base",
+    "text-lg",
+    "text-xl",
   ],
   plugins: [],
 };

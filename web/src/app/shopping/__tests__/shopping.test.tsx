@@ -2,7 +2,7 @@
  * Failing tests for shopping page — must fail before shopping/page.tsx is implemented.
  */
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import ShoppingPage from "../page";
 
 vi.mock("next/navigation", () => ({
