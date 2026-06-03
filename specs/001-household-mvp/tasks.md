@@ -187,13 +187,13 @@
 
 ### Implementation for User Story 6
 
-- [ ] T059a [US6] Write failing API tests in `api/tests/test_reminders.py` and extend `api/tests/test_ical.py` — `POST /reminders` with `fire_at_local`+`timezone` stores converted UTC `fire_at`; `GET /jobs/tick` with correct `X-Scheduler-Secret` sets `delivered=TRUE` on due reminders and returns count; wrong `X-Scheduler-Secret` returns 403; delivered reminders appear as VEVENT entries in the iCal feed; all tests MUST fail before T060–T065 are implemented
-- [ ] T060 [P] [US6] Implement `api/routers/reminders.py` — `GET /reminders`: caller's reminders only (RLS enforces `person_id=auth.uid()`); `POST /reminders`: accept `fire_at_local` + `timezone`, convert to UTC via `zoneinfo.ZoneInfo(timezone)`, store as `fire_at` UTC; `DELETE /reminders/{reminder_id}`: caller's own only
-- [ ] T061 [US6] Implement `api/routers/jobs.py` — `GET /jobs/tick`: validate `X-Scheduler-Secret` header against `SCHEDULER_SECRET` env var (return 403 immediately on mismatch); `UPDATE reminders SET delivered=TRUE WHERE fire_at <= now() AND delivered=FALSE`; return `{"reminders_delivered": int, "tick_at": "<UTC ISO>"}`
-- [ ] T062 [US6] Extend `api/routers/ical.py` `GET /ical/{secret}` — include `delivered=TRUE` reminders for that person as VEVENT entries with `VALARM DISPLAY` component (5-min default trigger) so external calendar app fires native alert; also include undelivered reminders with future `fire_at` so calendar shows them coming up
-- [ ] T063 [US6] Register reminders router at `/api/v1/reminders` and jobs router at `/api/v1/jobs` in `api/main.py`
-- [ ] T064 [P] [US6] Create `web/src/app/reminders/page.tsx` — reminder list via `GET /api/v1/reminders`; `fire_at` rendered in APP_TIMEZONE, title, "Delivered" badge for `delivered=TRUE`; "Add Reminder" button; DELETE button per item calls `DELETE /api/v1/reminders/{id}`
-- [ ] T065 [US6] Create `web/src/app/reminders/new/page.tsx` — create reminder form: title input, `datetime-local` picker (APP_TIMEZONE display), reads `APP_TIMEZONE` from env; `POST /api/v1/reminders` with `{ fire_at_local, timezone }` on submit
+- [X] T059a [US6] Write failing API tests in `api/tests/test_reminders.py` and extend `api/tests/test_ical.py` — `POST /reminders` with `fire_at_local`+`timezone` stores converted UTC `fire_at`; `GET /jobs/tick` with correct `X-Scheduler-Secret` sets `delivered=TRUE` on due reminders and returns count; wrong `X-Scheduler-Secret` returns 403; delivered reminders appear as VEVENT entries in the iCal feed; all tests MUST fail before T060–T065 are implemented
+- [X] T060 [P] [US6] Implement `api/routers/reminders.py` — `GET /reminders`: caller's reminders only (RLS enforces `person_id=auth.uid()`); `POST /reminders`: accept `fire_at_local` + `timezone`, convert to UTC via `zoneinfo.ZoneInfo(timezone)`, store as `fire_at` UTC; `DELETE /reminders/{reminder_id}`: caller's own only
+- [X] T061 [US6] Implement `api/routers/jobs.py` — `GET /jobs/tick`: validate `X-Scheduler-Secret` header against `SCHEDULER_SECRET` env var (return 403 immediately on mismatch); `UPDATE reminders SET delivered=TRUE WHERE fire_at <= now() AND delivered=FALSE`; return `{"reminders_delivered": int, "tick_at": "<UTC ISO>"}`
+- [X] T062 [US6] Extend `api/routers/ical.py` `GET /ical/{secret}` — include `delivered=TRUE` reminders for that person as VEVENT entries with `VALARM DISPLAY` component (5-min default trigger) so external calendar app fires native alert; also include undelivered reminders with future `fire_at` so calendar shows them coming up
+- [X] T063 [US6] Register reminders router at `/api/v1/reminders` and jobs router at `/api/v1/jobs` in `api/main.py`
+- [X] T064 [P] [US6] Create `web/src/app/reminders/page.tsx` — reminder list via `GET /api/v1/reminders`; `fire_at` rendered in APP_TIMEZONE, title, "Delivered" badge for `delivered=TRUE`; "Add Reminder" button; DELETE button per item calls `DELETE /api/v1/reminders/{id}`
+- [X] T065 [US6] Create `web/src/app/reminders/new/page.tsx` — create reminder form: title input, `datetime-local` picker (APP_TIMEZONE display), reads `APP_TIMEZONE` from env; `POST /api/v1/reminders` with `{ fire_at_local, timezone }` on submit
 
 **Checkpoint**: US6 complete — personal timed reminders delivered via iCal feed independently functional
 
@@ -207,12 +207,12 @@
 
 ### Implementation for User Story 7
 
-- [ ] T065a [US7] Write failing API tests in `api/tests/test_dashboard.py` — `GET /dashboard` returns `overdue_tasks`, `today_tasks`, `today_events`, `shopping_counts`, `upcoming_events` sections; each task and event item includes `group_name`; empty dashboard returns all sections as empty arrays (not 404); all tests MUST fail before T066–T070 are implemented
-- [ ] T066 [US7] Implement `api/routers/dashboard.py` — `GET /dashboard`: single optimized multi-query to fetch across all caller's groups: (1) overdue tasks (`due_at < now()`, `done=FALSE`), (2) tasks due today (`done=FALSE`), (3) events today, (4) unchecked shopping item count per group, (5) events in next 7 days; each item includes `group_name`; return structured JSON per `contracts/api.md §Dashboard`
-- [ ] T067 [US7] Register dashboard router at `/api/v1/dashboard` in `api/main.py`
-- [ ] T068 [P] [US7] Create `web/src/app/dashboard/page.tsx` — fetch data via `GET /api/v1/dashboard`; sections in FR-016 priority order: Overdue Tasks, Today's Tasks, Today's Events, Shopping Counts (badge per group), Upcoming Events (7 days); each item shows group name label; overdue styled amber (never red)
-- [ ] T069 [US7] Implement empty dashboard state in `web/src/app/dashboard/page.tsx` — calm positive message (e.g., "All caught up!") with no urgency language, no alarm icons, no red when all 5 sections are empty (US7 acceptance scenario 5, FR-018)
-- [ ] T070 [US7] Make `/dashboard` the post-login redirect target in `web/src/app/(auth)/callback/route.ts`; set Dashboard as the active tab highlight in `web/src/components/BottomNav.tsx` on that route
+- [X] T065a [US7] Write failing API tests in `api/tests/test_dashboard.py` — `GET /dashboard` returns `overdue_tasks`, `today_tasks`, `today_events`, `shopping_counts`, `upcoming_events` sections; each task and event item includes `group_name`; empty dashboard returns all sections as empty arrays (not 404); all tests MUST fail before T066–T070 are implemented
+- [X] T066 [US7] Implement `api/routers/dashboard.py` — `GET /dashboard`: single optimized multi-query to fetch across all caller's groups: (1) overdue tasks (`due_at < now()`, `done=FALSE`), (2) tasks due today (`done=FALSE`), (3) events today, (4) unchecked shopping item count per group, (5) events in next 7 days; each item includes `group_name`; return structured JSON per `contracts/api.md §Dashboard`
+- [X] T067 [US7] Register dashboard router at `/api/v1/dashboard` in `api/main.py`
+- [X] T068 [P] [US7] Create `web/src/app/dashboard/page.tsx` — fetch data via `GET /api/v1/dashboard`; sections in FR-016 priority order: Overdue Tasks, Today's Tasks, Today's Events, Shopping Counts (badge per group), Upcoming Events (7 days); each item shows group name label; overdue styled amber (never red)
+- [X] T069 [US7] Implement empty dashboard state in `web/src/app/dashboard/page.tsx` — calm positive message (e.g., "All caught up!") with no urgency language, no alarm icons, no red when all 5 sections are empty (US7 acceptance scenario 5, FR-018)
+- [X] T070 [US7] Make `/dashboard` the post-login redirect target in `web/src/app/(auth)/callback/route.ts`; set Dashboard as the active tab highlight in `web/src/components/BottomNav.tsx` on that route
 
 **Checkpoint**: US7 complete — all 7 user stories independently functional and integrated
 

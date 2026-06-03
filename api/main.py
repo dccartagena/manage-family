@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import events, groups, ical, invites, person, shopping, tasks
+from api.routers import dashboard, events, groups, ical, invites, jobs, person, reminders, shopping, tasks
 
 app = FastAPI(
     title="Household Manager API",
@@ -41,8 +41,6 @@ app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(shopping.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")
 app.include_router(ical.router, prefix="/api/v1")
-
-# Router stubs — registered as each phase is implemented:
-# from api.routers import reminders, jobs
-# app.include_router(reminders.router, prefix="/api/v1/reminders")
-# app.include_router(jobs.router, prefix="/api/v1/jobs")
+app.include_router(reminders.router, prefix="/api/v1")
+app.include_router(jobs.router, prefix="/api/v1")
+app.include_router(dashboard.router, prefix="/api/v1")

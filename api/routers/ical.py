@@ -6,13 +6,13 @@ from typing import Annotated
 import recurring_ical_events
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response
-from icalendar import Calendar, Event as ICalEvent, vRecur
+from icalendar import Alarm, Calendar, Event as ICalEvent, vRecur
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
-from api.models import Event, Group, Membership, Person
+from api.models import Event, Group, Membership, Person, Reminder
 
 router = APIRouter()
 
@@ -23,7 +23,7 @@ class RotateResponse(BaseModel):
     new_feed_url: str
 
 
-def _build_ical_calendar(events: list[Event]) -> bytes:
+def _build_ical_calendar(events: list[Event], reminders: list[Reminder]) -> bytes:
     cal = Calendar()
     cal.add("PRODID", "-//Household Manager//EN")
     cal.add("VERSION", "2.0")
@@ -60,6 +60,25 @@ def _build_ical_calendar(events: list[Event]) -> bytes:
             vevent.add("UID", str(event.id))
             cal.add_component(vevent)
 
+    for reminder in reminders:
+        fire_at = reminder.fire_at
+        if fire_at.tzinfo is None:
+            fire_at = fire_at.replace(tzinfo=timezone.utc)
+
+        vevent = ICalEvent()
+        vevent.add("SUMMARY", reminder.title)
+        vevent.add("DTSTART", fire_at)
+        vevent.add("DTEND", fire_at)
+        vevent.add("UID", f"reminder-{reminder.id}")
+
+        alarm = Alarm()
+        alarm.add("ACTION", "DISPLAY")
+        alarm.add("TRIGGER", timedelta(minutes=-5))
+        alarm.add("DESCRIPTION", reminder.title)
+        vevent.add_component(alarm)
+
+        cal.add_component(vevent)
+
     return cal.to_ical()
 
 
@@ -81,6 +100,20 @@ def _get_reachable_group_ids(session: Session, person_id: uuid.UUID) -> set[uuid
         frontier = list(new_children)
 
     return reachable
+
+
+def _fetch_reminders_for_person(
+    session: Session, person_id: uuid.UUID
+) -> list[Reminder]:
+    # Include delivered reminders and undelivered future reminders so the
+    # calendar app shows both past alerts and upcoming ones.
+    now = datetime.now(tz=timezone.utc).replace(tzinfo=None)
+    return session.exec(
+        select(Reminder).where(
+            Reminder.person_id == person_id,
+            (Reminder.delivered == True) | (Reminder.fire_at > now),  # noqa: E712
+        )
+    ).all()
 
 
 def _fetch_events_for_person(
@@ -110,7 +143,8 @@ def get_ical_feed(
         )
 
     events = _fetch_events_for_person(session, person.id)
-    cal_bytes = _build_ical_calendar(events)
+    reminders = _fetch_reminders_for_person(session, person.id)
+    cal_bytes = _build_ical_calendar(events, reminders)
 
     return Response(
         content=cal_bytes,

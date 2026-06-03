@@ -1,5 +1,6 @@
 """Failing tests for iCal feed — must fail before api/routers/ical.py is implemented."""
 import uuid
+from datetime import datetime, timezone, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,6 +8,13 @@ from fastapi.testclient import TestClient
 from api.main import app
 
 client = TestClient(app)
+
+_SCHEDULER_SECRET = "test-scheduler-secret"
+
+
+@pytest.fixture(autouse=True)
+def set_scheduler_secret(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SCHEDULER_SECRET", _SCHEDULER_SECRET)
 
 
 def test_ical_unknown_secret_returns_404() -> None:
@@ -128,3 +136,53 @@ def test_ical_old_secret_returns_404_after_rotate(make_auth_token) -> None:
     client.post("/api/v1/ical/rotate", headers=headers)
 
     assert client.get(f"/api/v1/ical/{old_secret}").status_code == 404
+
+
+def test_ical_includes_delivered_reminder_as_vevent(make_auth_token) -> None:
+    """GET /ical/{secret} includes delivered reminder as VEVENT with VALARM."""
+    token = make_auth_token(email="ical_reminder_delivered@example.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    sync_resp = client.post("/api/v1/person/sync", headers=headers)
+    ical_secret = sync_resp.json()["ical_secret"]
+
+    past_time = (datetime.now(tz=timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+    client.post(
+        "/api/v1/reminders",
+        headers=headers,
+        json={"title": "Past reminder", "fire_at_local": past_time, "timezone": "UTC"},
+    )
+
+    client.get(
+        "/api/v1/jobs/tick",
+        headers={"X-Scheduler-Secret": _SCHEDULER_SECRET},
+    )
+
+    response = client.get(f"/api/v1/ical/{ical_secret}")
+    assert response.status_code == 200
+    content = response.text
+    assert "Past reminder" in content
+    assert "VEVENT" in content
+    assert "VALARM" in content
+
+
+def test_ical_includes_future_undelivered_reminder_as_vevent(make_auth_token) -> None:
+    """GET /ical/{secret} includes undelivered future reminder as VEVENT."""
+    token = make_auth_token(email="ical_reminder_future@example.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    sync_resp = client.post("/api/v1/person/sync", headers=headers)
+    ical_secret = sync_resp.json()["ical_secret"]
+
+    future_time = (datetime.now(tz=timezone.utc) + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+    client.post(
+        "/api/v1/reminders",
+        headers=headers,
+        json={"title": "Future reminder", "fire_at_local": future_time, "timezone": "UTC"},
+    )
+
+    response = client.get(f"/api/v1/ical/{ical_secret}")
+    assert response.status_code == 200
+    content = response.text
+    assert "Future reminder" in content
+    assert "VEVENT" in content
