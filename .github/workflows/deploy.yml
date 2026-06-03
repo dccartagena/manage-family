@@ -20,12 +20,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel@33.0.0
 
-      - name: Deploy
-        run: vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to production
+        run: vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --confirm
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deployment successful
+        if: success()
+        run: echo "✅ Successfully deployed to production"
