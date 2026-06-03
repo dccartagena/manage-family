@@ -25,10 +25,10 @@ class PersonResponse(BaseModel):
 
 
 class UiPrefsUpdate(BaseModel):
-    text_size: str | None
-    contrast: str | None
-    reduce_motion: bool | None
-    notification_batching: str | None
+    text_size: str | None = None
+    contrast: str | None = None
+    reduce_motion: bool | None = None
+    notification_batching: str | None = None
 
     model_config = {"extra": "forbid"}
 

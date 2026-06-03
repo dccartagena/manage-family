@@ -3,8 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlmodel import Column, Field, SQLModel
-from sqlalchemy import text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON, text
 
 
 class Person(SQLModel, table=True):
@@ -19,7 +18,7 @@ class Person(SQLModel, table=True):
     display_name: str = Field(nullable=False)
     ui_prefs: dict = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'")),
+        sa_column=Column(JSON, nullable=False, server_default=text("'{}'")),
     )
     ical_secret: uuid.UUID = Field(
         default_factory=uuid.uuid4,
