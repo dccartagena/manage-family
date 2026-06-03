@@ -5,10 +5,16 @@ on:
     branches: [production]
 
 jobs:
+  # ============================================================================
+  # Quality Gate
+  # ============================================================================
   ci:
     name: CI
     uses: ./.github/workflows/ci.yml
 
+  # ============================================================================
+  # Deploy
+  # ============================================================================
   deploy:
     name: Deploy to Vercel
     needs: ci
@@ -26,7 +32,7 @@ jobs:
         run: npm install -g vercel@33.0.0
 
       - name: Deploy to production
-        run: vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --confirm
+        run: vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
