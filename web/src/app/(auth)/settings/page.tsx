@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createAuthBrowserClient } from "@/lib/supabase";
 
 type TextSize = "normal" | "large" | "xlarge";
@@ -36,12 +36,39 @@ async function patchPrefs(prefs: Partial<UiPrefs>): Promise<UiPrefs> {
   return response.json() as Promise<UiPrefs>;
 }
 
+async function fetchIcalSecret(): Promise<string | null> {
+  const token = await fetchAccessToken();
+  const response = await fetch(`${API_URL}/api/v1/person/sync`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) return null;
+  const data = (await response.json()) as { ical_secret: string };
+  return data.ical_secret;
+}
+
+async function rotateIcalSecret(): Promise<string> {
+  const token = await fetchAccessToken();
+  const response = await fetch(`${API_URL}/api/v1/ical/rotate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(`Rotate failed: ${response.status}`);
+  const data = (await response.json()) as { new_feed_url: string };
+  return data.new_feed_url;
+}
+
 export default function SettingsPage() {
   const [prefs, setPrefs] = useState<UiPrefs>({
     text_size: "normal",
     contrast: "normal",
     reduce_motion: false,
   });
+  const [feedUrl, setFeedUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [rotating, setRotating] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [feedError, setFeedError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createAuthBrowserClient();
@@ -51,12 +78,39 @@ export default function SettingsPage() {
         setPrefs((prev) => ({ ...prev, ...stored }));
       }
     });
+
+    fetchIcalSecret().then((secret) => {
+      if (secret) {
+        setFeedUrl(`${API_URL}/api/v1/ical/${secret}`);
+      }
+    });
   }, []);
 
   async function handleChange(update: Partial<UiPrefs>) {
     const next = { ...prefs, ...update };
     setPrefs(next);
     await patchPrefs(update);
+  }
+
+  const handleCopy = useCallback(async () => {
+    if (!feedUrl) return;
+    await navigator.clipboard.writeText(feedUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [feedUrl]);
+
+  async function handleRotate() {
+    setRotating(true);
+    setFeedError(null);
+    try {
+      const newUrl = await rotateIcalSecret();
+      setFeedUrl(newUrl);
+      setConfirmReset(false);
+    } catch (err) {
+      setFeedError(err instanceof Error ? err.message : "Failed to reset URL");
+    } finally {
+      setRotating(false);
+    }
   }
 
   return (
@@ -125,6 +179,85 @@ export default function SettingsPage() {
             }`}
           />
         </button>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold">Calendar feed</h2>
+        <p className="text-xs text-muted-foreground">
+          Subscribe to your personal iCal feed to see household events in Google Calendar or
+          Outlook.
+        </p>
+
+        {feedUrl ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={feedUrl}
+                className="flex-1 truncate rounded-md border border-input bg-muted px-3 py-2 text-xs font-mono"
+                aria-label="iCal feed URL"
+              />
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="shrink-0 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p>
+                <span className="font-medium">Google Calendar:</span> Settings → Other calendars →
+                From URL → Paste URL
+              </p>
+              <p>
+                <span className="font-medium">Outlook:</span> Add calendar → Subscribe from web →
+                Paste URL
+              </p>
+            </div>
+
+            {feedError && (
+              <p className="text-xs text-destructive">{feedError}</p>
+            )}
+
+            {!confirmReset ? (
+              <button
+                type="button"
+                onClick={() => setConfirmReset(true)}
+                className="text-xs text-muted-foreground underline hover:text-foreground"
+              >
+                Reset feed URL
+              </button>
+            ) : (
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <p className="text-xs font-medium">
+                  Reset your feed URL? Your current URL will stop working immediately.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReset(false)}
+                    className="flex-1 rounded-md border border-input bg-background py-1.5 text-xs font-medium"
+                  >
+                    Keep current
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRotate}
+                    disabled={rotating}
+                    className="flex-1 rounded-md bg-destructive py-1.5 text-xs font-medium text-destructive-foreground disabled:opacity-50"
+                  >
+                    {rotating ? "Resetting…" : "Reset URL"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">Loading feed URL…</p>
+        )}
       </section>
     </main>
   );
