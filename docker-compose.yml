@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: manage_family
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - api/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/manage_family
+      DATABASE_POOL_URL: postgresql://postgres:postgres@db:5432/manage_family
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - web/.env.local
+    depends_on:
+      - api
+
+volumes:
+  pg_data:
