@@ -47,3 +47,6 @@ target-version = ["py312"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["api/tests"]
+
+[tool.vercel]
+entrypoint = "api.main:app"
