@@ -49,4 +49,4 @@ asyncio_mode = "auto"
 testpaths = ["api/tests"]
 
 [tool.vercel]
-entrypoint = "api.main:app"
+entrypoint = "main:app"
