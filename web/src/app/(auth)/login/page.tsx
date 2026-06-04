@@ -3,59 +3,85 @@
 import { useState } from "react";
 import { createAuthBrowserClient } from "@/lib/supabase";
 
-type State = "form" | "sent" | "error";
+type Mode = "signin" | "signup";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export default function LoginPage() {
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
-  const [state, setState] = useState<State>("form");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  function switchMode(next: Mode) {
+    setMode(next);
+    setError("");
+    setInfo("");
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const supabase = createAuthBrowserClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${location.origin}/callback` },
-    });
-    if (error) {
-      setErrorMessage(error.message);
-      setState("error");
-    } else {
-      setState("sent");
-    }
-  }
+    setError("");
+    setInfo("");
+    setLoading(true);
 
-  if (state === "sent") {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-        <h1 className="text-2xl font-semibold">Check your email</h1>
-        <p className="max-w-sm text-center text-muted-foreground">
-          We sent a magic link to <strong>{email}</strong>. Click it to sign in.
-        </p>
-        <button
-          type="button"
-          className="text-sm text-muted-foreground underline"
-          onClick={() => setState("form")}
-        >
-          Use a different email
-        </button>
-      </main>
-    );
+    const supabase = createAuthBrowserClient();
+
+    if (mode === "signup") {
+      const { data, error: authError } = await supabase.auth.signUp({ email, password });
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+      if (!data.session) {
+        setInfo("Account created. Check your email to confirm before signing in.");
+        setLoading(false);
+        return;
+      }
+      await fetch(`${API_URL}/api/v1/person/sync`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      window.location.href = "/dashboard";
+      return;
+    }
+
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
+    await fetch(`${API_URL}/api/v1/person/sync`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${data.session.access_token}` },
+    });
+    window.location.href = "/dashboard";
   }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
       <div className="w-full max-w-sm space-y-2">
-        <h1 className="text-2xl font-semibold">Sign in</h1>
+        <h1 className="text-2xl font-semibold">
+          {mode === "signin" ? "Sign in" : "Create account"}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Enter your email and we&apos;ll send you a magic link.
+          {mode === "signin" ? "Enter your email and password." : "Choose an email and password."}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-        {state === "error" && (
+        {error && (
           <p role="alert" className="rounded border border-destructive p-2 text-sm text-destructive">
-            {errorMessage}
+            {error}
+          </p>
+        )}
+        {info && (
+          <p role="status" className="rounded border border-border p-2 text-sm text-muted-foreground">
+            {info}
           </p>
         )}
 
@@ -76,13 +102,63 @@ export default function LoginPage() {
           />
         </div>
 
+        <div className="space-y-1">
+          <label htmlFor="password" className="text-sm font-medium">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="••••••••"
+          />
+        </div>
+
         <button
           type="submit"
-          className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          disabled={loading}
+          className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
         >
-          Send magic link
+          {loading
+            ? mode === "signin"
+              ? "Signing in…"
+              : "Creating account…"
+            : mode === "signin"
+              ? "Sign in"
+              : "Create account"}
         </button>
       </form>
+
+      <p className="text-sm text-muted-foreground">
+        {mode === "signin" ? (
+          <>
+            No account?{" "}
+            <button
+              type="button"
+              onClick={() => switchMode("signup")}
+              className="underline hover:text-foreground"
+            >
+              Create one
+            </button>
+          </>
+        ) : (
+          <>
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => switchMode("signin")}
+              className="underline hover:text-foreground"
+            >
+              Sign in
+            </button>
+          </>
+        )}
+      </p>
     </main>
   );
 }

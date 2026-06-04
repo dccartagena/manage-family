@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CheckSquare, Home, ShoppingCart, Bell } from "lucide-react";
+import { Bell, CalendarDays, CheckSquare, Home, Settings, ShoppingCart } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/shopping", label: "Shopping", icon: ShoppingCart },
   { href: "/events", label: "Events", icon: CalendarDays },
   { href: "/reminders", label: "Reminders", icon: Bell },
+  { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
 export function BottomNav() {

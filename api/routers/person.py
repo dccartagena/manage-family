@@ -24,6 +24,12 @@ class PersonResponse(BaseModel):
     ical_secret: uuid.UUID
 
 
+class PersonProfileUpdate(BaseModel):
+    display_name: str | None = None
+
+    model_config = {"extra": "forbid"}
+
+
 class UiPrefsUpdate(BaseModel):
     text_size: str | None = None
     contrast: str | None = None
@@ -58,6 +64,39 @@ def sync_person(
         email=auth.email,
         display_name=display_name,
     )
+    session.add(person)
+    session.commit()
+    session.refresh(person)
+
+    return PersonResponse(
+        id=person.id,
+        email=person.email,
+        display_name=person.display_name,
+        ui_prefs=person.ui_prefs,
+        ical_secret=person.ical_secret,
+    )
+
+
+@router.patch("/person/profile", response_model=PersonResponse)
+def update_profile(
+    body: PersonProfileUpdate,
+    auth: Annotated[PersonAuth, Depends(get_person_auth)],
+    session: Annotated[Session, Depends(get_session)],
+) -> PersonResponse:
+    """Partial update of caller's profile fields (display_name)."""
+    person = session.exec(
+        select(Person).where(Person.id == auth.person_id)
+    ).first()
+
+    if not person:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Person not found — call POST /person/sync first",
+        )
+
+    if body.display_name is not None:
+        person.display_name = body.display_name
+
     session.add(person)
     session.commit()
     session.refresh(person)
