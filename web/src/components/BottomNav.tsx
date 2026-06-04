@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, CheckSquare, Home, Settings, ShoppingCart } from "lucide-react";
+import { Bell, CalendarDays, CheckSquare, Home, Package, Settings, ShoppingCart } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/shopping", label: "Shopping", icon: ShoppingCart },
+  { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/events", label: "Events", icon: CalendarDays },
   { href: "/reminders", label: "Reminders", icon: Bell },
   { href: "/settings", label: "Settings", icon: Settings },

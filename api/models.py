@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from sqlmodel import Column, Field, SQLModel
-from sqlalchemy import JSON, text
+from sqlalchemy import CheckConstraint, JSON, text
 
 
 class Person(SQLModel, table=True):
@@ -157,6 +157,11 @@ class ShoppingItem(SQLModel, table=True):
         nullable=False,
         sa_column_kwargs={"server_default": text("FALSE")},
     )
+    canonical_product_id: Optional[uuid.UUID] = Field(
+        default=None,
+        foreign_key="canonical_products.id",
+        nullable=True,
+    )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
         nullable=False,
@@ -167,6 +172,113 @@ class ShoppingItem(SQLModel, table=True):
         nullable=False,
         sa_column_kwargs={"server_default": text("now()")},
     )
+
+
+class CanonicalProduct(SQLModel, table=True):
+    __tablename__ = "canonical_products"
+    __table_args__ = (
+        CheckConstraint(
+            "usual_location IN ('fridge','freezer','pantry','other')",
+            name="ck_canonical_products_location",
+        ),
+        CheckConstraint("expiry_days_default > 0", name="ck_canonical_products_expiry_days"),
+    )
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        sa_column_kwargs={"server_default": text("gen_random_uuid()")},
+    )
+    group_id: uuid.UUID = Field(foreign_key="groups.id", nullable=False)
+    name: str = Field(nullable=False)
+    category: str = Field(nullable=False)
+    is_staple: bool = Field(
+        default=False,
+        nullable=False,
+        sa_column_kwargs={"server_default": text("FALSE")},
+    )
+    usual_location: str = Field(nullable=False)
+    expiry_days_default: Optional[int] = Field(default=None, nullable=True)
+
+
+class ProductCache(SQLModel, table=True):
+    __tablename__ = "product_cache"
+    __table_args__ = (
+        CheckConstraint(
+            "source IN ('off','ah','jumbo','manual')",
+            name="ck_product_cache_source",
+        ),
+    )
+
+    barcode: str = Field(primary_key=True)
+    canonical_product_id: Optional[uuid.UUID] = Field(
+        default=None,
+        foreign_key="canonical_products.id",
+        nullable=True,
+    )
+    source: str = Field(nullable=False)
+    name: str = Field(nullable=False)
+    brand: Optional[str] = Field(default=None, nullable=True)
+    category: Optional[str] = Field(default=None, nullable=True)
+    raw_data: dict = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False, server_default=text("'{}'")),
+    )
+    cached_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False,
+        sa_column_kwargs={"server_default": text("now()")},
+    )
+
+
+class InventoryItem(SQLModel, table=True):
+    __tablename__ = "inventory_items"
+    __table_args__ = (
+        CheckConstraint(
+            "location IN ('fridge','freezer','pantry','other')",
+            name="ck_inventory_items_location",
+        ),
+        CheckConstraint(
+            "status IN ('ok','low','out')",
+            name="ck_inventory_items_status",
+        ),
+        CheckConstraint(
+            "removed_reason IN ('used','thrown','transferred')",
+            name="ck_inventory_items_removed_reason",
+        ),
+    )
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        sa_column_kwargs={"server_default": text("gen_random_uuid()")},
+    )
+    group_id: uuid.UUID = Field(foreign_key="groups.id", nullable=False)
+    canonical_product_id: uuid.UUID = Field(
+        foreign_key="canonical_products.id",
+        nullable=False,
+    )
+    barcode: Optional[str] = Field(
+        default=None,
+        foreign_key="product_cache.barcode",
+        nullable=True,
+    )
+    name: str = Field(nullable=False)
+    location: str = Field(nullable=False)
+    status: str = Field(
+        default="ok",
+        nullable=False,
+        sa_column_kwargs={"server_default": text("'ok'")},
+    )
+    expiry_date: Optional[date] = Field(default=None, nullable=True)
+    added_by: uuid.UUID = Field(foreign_key="persons.id", nullable=False)
+    added_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False,
+        sa_column_kwargs={"server_default": text("now()")},
+    )
+    removed_at: Optional[datetime] = Field(default=None, nullable=True)
+    removed_reason: Optional[str] = Field(default=None, nullable=True)
 
 
 class Event(SQLModel, table=True):
