@@ -92,6 +92,29 @@ class InventoryItemCreate(BaseModel):
         return v
 
 
+class InventoryItemUpdate(BaseModel):
+    status: Literal["ok", "low", "out"] | None = None
+    expiry_date: str | None = None
+
+    model_config = {"extra": "forbid"}
+
+    @field_validator("expiry_date")
+    @classmethod
+    def validate_expiry_date_format(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        try:
+            datetime.strptime(v, "%d-%m-%Y")
+        except ValueError:
+            raise ValueError("expiry_date must be in DD-MM-YYYY format")
+        return v
+
+
+class InventoryItemUpdateResponse(InventoryItemRead):
+    shopping_item_created: bool
+    shopping_item_name: str | None
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
@@ -318,3 +341,84 @@ def create_inventory_item(
     session.commit()
     session.refresh(item)
     return _inventory_item_to_read(item, canonical_product.name)
+
+
+# ── T029: Inventory list ──────────────────────────────────────────────────────
+
+
+@router.get(
+    "/groups/{group_id}/inventory",
+    response_model=list[InventoryItemRead],
+)
+def list_inventory(
+    group_id: uuid.UUID,
+    auth: Annotated[PersonAuth, Depends(get_person_auth)],
+    session: Annotated[Session, Depends(get_session)],
+) -> list[InventoryItemRead]:
+    membership = _get_membership(session, auth.person_id, group_id)
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Caller is not a member of this group",
+        )
+
+    items = session.exec(
+        select(InventoryItem).where(
+            InventoryItem.group_id == group_id,
+            InventoryItem.removed_at.is_(None),  # type: ignore[union-attr]
+        )
+    ).all()
+
+    result: list[InventoryItemRead] = []
+    for item in items:
+        cp = session.get(CanonicalProduct, item.canonical_product_id)
+        cp_name = cp.name if cp else ""
+        result.append(_inventory_item_to_read(item, cp_name))
+    return result
+
+
+# ── T030: Inventory item status/expiry update ─────────────────────────────────
+
+
+@router.patch(
+    "/inventory/{item_id}",
+    response_model=InventoryItemUpdateResponse,
+)
+def update_inventory_item(
+    item_id: uuid.UUID,
+    body: InventoryItemUpdate,
+    auth: Annotated[PersonAuth, Depends(get_person_auth)],
+    session: Annotated[Session, Depends(get_session)],
+) -> InventoryItemUpdateResponse:
+    item = session.get(InventoryItem, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Inventory item not found",
+        )
+
+    membership = _get_membership(session, auth.person_id, item.group_id)
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Caller is not a member of this group",
+        )
+
+    if body.status is not None:
+        item.status = body.status
+
+    if body.expiry_date is not None:
+        item.expiry_date = datetime.strptime(body.expiry_date, "%d-%m-%Y").date()
+
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+
+    cp = session.get(CanonicalProduct, item.canonical_product_id)
+    cp_name = cp.name if cp else ""
+    base = _inventory_item_to_read(item, cp_name)
+    return InventoryItemUpdateResponse(
+        **base.model_dump(),
+        shopping_item_created=False,
+        shopping_item_name=None,
+    )

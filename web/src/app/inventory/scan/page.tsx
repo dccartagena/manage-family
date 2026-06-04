@@ -200,7 +200,7 @@ export default function ScanPage() {
 
       setState({ stage: "saving" });
       await createInventoryItem(groupId, body, token);
-      router.push("/inventory");
+      router.push(`/inventory?group=${groupId}`);
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : "Save failed");
       setState(

@@ -84,16 +84,16 @@
 
 ### Tests (write first — must be RED before implementation)
 
-- [ ] T026 [P] [US2] Write failing integration tests for `GET /groups/{group_id}/inventory` — returns only active items (removed_at IS NULL), includes status=out items, excludes removed items; non-member 403 — `api/tests/test_inventory.py`
-- [ ] T027 [P] [US2] Write failing integration tests for `PATCH /inventory/{item_id}` status update — ok→low, low→out, out→ok cycle; expiry date update; non-member 403; unknown item 404; invalid status 422 — `api/tests/test_inventory.py` (no staple side-effect test yet — added in US3)
-- [ ] T028 [P] [US2] Write failing component tests for inventory list page — (a) use-soon section renders for items with expiry ≤3 days and has amber class, (b) items render in location groups, (c) item with status=out has ghost/muted class — `web/src/app/inventory/__tests__/inventory.test.tsx`
+- [X] T026 [P] [US2] Write failing integration tests for `GET /groups/{group_id}/inventory` — returns only active items (removed_at IS NULL), includes status=out items, excludes removed items; non-member 403 — `api/tests/test_inventory.py`
+- [X] T027 [P] [US2] Write failing integration tests for `PATCH /inventory/{item_id}` status update — ok→low, low→out, out→ok cycle; expiry date update; non-member 403; unknown item 404; invalid status 422 — `api/tests/test_inventory.py` (no staple side-effect test yet — added in US3)
+- [X] T028 [P] [US2] Write failing component tests for inventory list page — (a) use-soon section renders for items with expiry ≤3 days and has amber class, (b) items render in location groups, (c) item with status=out has ghost/muted class — `web/src/app/inventory/__tests__/inventory.test.tsx`
 
 ### Implementation
 
-- [ ] T029 [US2] Implement `GET /groups/{group_id}/inventory` endpoint in `api/routers/inventory.py` — query `WHERE group_id = :gid AND removed_at IS NULL`; serialize `expiry_date` as `DD-MM-YYYY` string; return list of `InventoryItemRead` (depends T026)
-- [ ] T030 [US2] Implement `PATCH /inventory/{item_id}` status/expiry endpoint in `api/routers/inventory.py` — accept `status` and `expiry_date` (both optional); validate status enum; persist; return updated item with `shopping_item_created: false` placeholder in response schema (staple side-effect added in T034) (depends T027)
-- [ ] T031 [P] [US2] Implement `listInventory` and `updateInventoryItem` in `web/src/lib/inventory.ts` — replace stubs with real fetch calls; `updateInventoryItem` returns `InventoryItemUpdateResponse` that includes optional `shopping_item_created` + `shopping_item_name` fields (depends T024)
-- [ ] T032 [US2] Create `web/src/app/inventory/page.tsx` — `"use client"`; fetch inventory on mount; compute use-soon (expiry ≤3 days from today); render use-soon section pinned at top with amber `bg-amber-50 border-amber-200` styling; render items grouped by location; render out-items with `opacity-40 line-through` at group bottom; tap item calls `updateInventoryItem` with next status in cycle; optimistic update with revert on error (depends T028, T031)
+- [X] T029 [US2] Implement `GET /groups/{group_id}/inventory` endpoint in `api/routers/inventory.py` — query `WHERE group_id = :gid AND removed_at IS NULL`; serialize `expiry_date` as `DD-MM-YYYY` string; return list of `InventoryItemRead` (depends T026)
+- [X] T030 [US2] Implement `PATCH /inventory/{item_id}` status/expiry endpoint in `api/routers/inventory.py` — accept `status` and `expiry_date` (both optional); validate status enum; persist; return updated item with `shopping_item_created: false` placeholder in response schema (staple side-effect added in T034) (depends T027)
+- [X] T031 [P] [US2] Implement `listInventory` and `updateInventoryItem` in `web/src/lib/inventory.ts` — replace stubs with real fetch calls; `updateInventoryItem` returns `InventoryItemUpdateResponse` that includes optional `shopping_item_created` + `shopping_item_name` fields (depends T024)
+- [X] T032 [US2] Create `web/src/app/inventory/page.tsx` — `"use client"`; fetch inventory on mount; compute use-soon (expiry ≤3 days from today); render use-soon section pinned at top with amber `bg-amber-50 border-amber-200` styling; render items grouped by location; render out-items with `opacity-40 line-through` at group bottom; tap item calls `updateInventoryItem` with next status in cycle; optimistic update with revert on error (depends T028, T031)
 
 **Checkpoint**: `pytest api/tests/test_inventory.py -k "inventory" -v` all green; load `/inventory` in browser with seeded data; verify grouping, use-soon section, and tap-to-cycle.
 
