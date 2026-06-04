@@ -59,8 +59,8 @@ export default async function RootLayout({
     <html lang="en" className={rootClasses} style={{ fontSize: fontScaleVar }}>
       <body>
         <main className="pb-16">{children}</main>
-        <BottomNav />
-        <InstallPrompt />
+        {user && <BottomNav />}
+        {user && <InstallPrompt />}
         <Script id="sw-register" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {

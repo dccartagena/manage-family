@@ -3,8 +3,8 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_PATHS = [
   "/login",
-  "/auth/callback",
-  "/auth/error",
+  "/callback",
+  "/error",
   "/join/",
   "/_next/",
   "/favicon.ico",

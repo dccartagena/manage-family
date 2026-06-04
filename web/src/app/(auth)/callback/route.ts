@@ -7,7 +7,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const code = searchParams.get("code");
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/auth/error?reason=missing_code`);
+    return NextResponse.redirect(`${origin}/error?reason=missing_code`);
   }
 
   const cookieStore = cookies();
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.session) {
-    return NextResponse.redirect(`${origin}/auth/error?reason=exchange_failed`);
+    return NextResponse.redirect(`${origin}/error?reason=exchange_failed`);
   }
 
   const accessToken = data.session.access_token;
