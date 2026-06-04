@@ -1,6 +1,6 @@
 # Household Manager
 
-Private household coordination PWA. Passwordless login, shared chores with recurrence, real-time shopping list, household events with iCal feed, and an urgency-ranked dashboard.
+Private household coordination PWA. Shared chores with recurrence, real-time shopping list, household events with iCal feed, and an urgency-ranked dashboard.
 
 ## Architecture
 
