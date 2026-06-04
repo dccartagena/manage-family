@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createAuthBrowserClient } from "@/lib/supabase";
 import {
@@ -181,9 +182,21 @@ export default function InventoryPage() {
 
   const LOCATION_ORDER: Location[] = ["fridge", "freezer", "pantry", "other"];
 
+  const scanHref = selectedGroupId
+    ? `/inventory/scan?group=${selectedGroupId}`
+    : "/inventory/scan";
+
   return (
-    <main className="mx-auto max-w-md p-4">
-      <h1 className="mb-4 text-xl font-semibold">Inventory</h1>
+    <main className="mx-auto max-w-md p-4 pb-24">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Inventory</h1>
+        <Link
+          href={scanHref}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          + Scan
+        </Link>
+      </div>
 
       {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
 

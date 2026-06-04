@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import { createAuthBrowserClient } from "@/lib/supabase";
 import {
@@ -76,7 +76,13 @@ function computeExpiryDate(
 
 export default function ScanPage() {
   const router = useRouter();
-  const [state, setState] = useState<PageState>({ stage: "group-select" });
+  const searchParams = useSearchParams();
+  const groupFromUrl = searchParams.get("group");
+  const [state, setState] = useState<PageState>(
+    groupFromUrl
+      ? { stage: "scanning", groupId: groupFromUrl }
+      : { stage: "group-select" },
+  );
   const [groups, setGroups] = useState<GroupItem[]>([]);
   const [groupsError, setGroupsError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
