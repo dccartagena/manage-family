@@ -18,9 +18,9 @@ Private household coordination PWA. Shared chores with recurrence, real-time sho
 └─────────────────────────────────────────────┘
 ```
 
-**Production**: both services deploy to Vercel Hobby (serverless). Postgres lives in Supabase free tier. Magic-link auth and Realtime subscriptions are Supabase infrastructure.
+**Production**: both services deploy to Vercel Hobby (serverless). Postgres lives in Supabase free tier. 
 
-**Local**: Postgres runs in Docker. Auth still requires a Supabase project (magic-link email delivery cannot be replicated locally).
+**Local**: Postgres runs in Docker. 
 
 ## Prerequisites
 
