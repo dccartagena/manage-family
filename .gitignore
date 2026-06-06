@@ -43,6 +43,15 @@ web/dist/
 
 # Vercel
 .vercel/
+.vercel/output/
+.vercelignore
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+supabase/functions/.env
+supabase/functions/*/.env
+secrets.txt
 
 # Workbox / PWA
 workbox-*.js
@@ -70,3 +79,4 @@ logs/
 htmlcov/
 .nyc_output/
 coverage/
+
