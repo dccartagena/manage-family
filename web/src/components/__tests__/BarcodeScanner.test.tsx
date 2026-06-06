@@ -1,7 +1,7 @@
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// --- Global mocks (must be hoisted above dynamic import) ---
+// ── Global stubs (hoisted above dynamic import) ─────────────────────────────
 
 const mockGetUserMedia = vi.fn();
 Object.defineProperty(global.navigator, "mediaDevices", {
@@ -18,10 +18,22 @@ const MockBarcodeDetector = vi.fn(() => ({ detect: mockBarcodeDetectorDetect }))
 global.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
 global.URL.revokeObjectURL = vi.fn();
 
+// jsdom does not implement ImageData
+(global as unknown as Record<string, unknown>).ImageData = class {
+  data: Uint8ClampedArray;
+  width: number;
+  height: number;
+  constructor(data: Uint8ClampedArray, width: number, height: number) {
+    this.data = data;
+    this.width = width;
+    this.height = height;
+  }
+};
+
 HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
   drawImage: vi.fn(),
   getImageData: vi.fn().mockReturnValue({
-    data: new Uint8ClampedArray(16),
+    data: new Uint8ClampedArray(64),
     width: 4,
     height: 4,
   }),
@@ -30,188 +42,137 @@ HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
 
 HTMLCanvasElement.prototype.toDataURL = vi.fn().mockReturnValue("data:image/jpeg;base64,abc");
 
-const mockDecodeFromCanvas = vi.fn();
+const mockScanImageData = vi.fn();
 
-vi.mock("@zxing/browser", () => ({
-  BrowserMultiFormatReader: vi.fn(() => ({
-    decodeFromCanvas: mockDecodeFromCanvas,
-  })),
-}));
-
-vi.mock("@zxing/library", () => ({
-  DecodeHintType: { POSSIBLE_FORMATS: 2, TRY_HARDER: 3 },
-  BarcodeFormat: { EAN_13: 7, EAN_8: 6, UPC_A: 14, CODE_128: 4 },
+vi.mock("@undecaf/zbar-wasm", () => ({
+  scanImageData: mockScanImageData,
 }));
 
 const { default: BarcodeScanner } = await import("../BarcodeScanner");
 
-// --- Helpers ---
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
-function makeMockStream(): MediaStream {
-  const mockTrack = { stop: vi.fn() } as unknown as MediaStreamTrack;
-  return { getTracks: () => [mockTrack] } as unknown as MediaStream;
+function makeMockStream(opts: { torch?: boolean } = {}): MediaStream {
+  const mockTrack = {
+    stop: vi.fn(),
+    getCapabilities: vi.fn().mockReturnValue(opts.torch ? { torch: true } : {}),
+    applyConstraints: vi.fn().mockResolvedValue(undefined),
+  } as unknown as MediaStreamTrack;
+  return {
+    getTracks: () => [mockTrack],
+    getVideoTracks: () => [mockTrack],
+  } as unknown as MediaStream;
 }
 
 function fireCanPlay(videoEl: HTMLVideoElement) {
-  // Use 4×4 matching the mocked getImageData size so pixel-processing loops are trivial
   Object.defineProperty(videoEl, "videoWidth", { value: 4, configurable: true });
   Object.defineProperty(videoEl, "videoHeight", { value: 4, configurable: true });
   fireEvent.canPlay(videoEl);
 }
 
-const notFound = Object.assign(new Error("NotFoundException"), {
-  constructor: { kind: "NotFoundException" },
-});
-const throwNotFound = () => { throw notFound; };
+// Advance fake setInterval past one tick and drain async callbacks
+async function advanceDecode() {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(DECODE_INTERVAL_MS + 50);
+  });
+}
 
-// --- Tests ---
-//
-// ZXing call order in the pipeline (isolation step skipped in tests because
-// mock getImageData returns all-zeros → no transitions → null bbox):
-//   #1 original | #2 2x-scale | #3 grayscale+contrast | #4 sharpen | #5 adaptive | #6 inverted
+const DECODE_INTERVAL_MS = 300;
+
+// ── Tests ────────────────────────────────────────────────────────────────────
 
 describe("BarcodeScanner", () => {
   beforeEach(() => {
+    // Only fake setInterval/clearInterval so React scheduler and waitFor still work
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     vi.clearAllMocks();
-    // mockReset clears once queues that clearAllMocks leaves intact
-    mockDecodeFromCanvas.mockReset();
     mockGetUserMedia.mockResolvedValue(makeMockStream());
     mockBarcodeDetectorDetect.mockResolvedValue([]);
-    mockDecodeFromCanvas.mockImplementation(throwNotFound);
+    mockScanImageData.mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("renders a video element on mount", async () => {
     render(<BarcodeScanner onDetected={vi.fn()} />);
-    await waitFor(() => {
-      expect(document.querySelector("video")).not.toBeNull();
-    });
+    await waitFor(() => expect(document.querySelector("video")).not.toBeNull());
   });
 
-  it("shows Scan button after canPlay event", async () => {
+  it("shows guide overlay and status text after canPlay", async () => {
     render(<BarcodeScanner onDetected={vi.fn()} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    fireCanPlay(video);
+    await act(async () => { fireCanPlay(video); });
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Scan" })).toBeDefined();
+      expect(screen.getByText("Align barcode with the frame")).toBeDefined();
     });
   });
 
-  it("calls onDetected via BarcodeDetector success path", async () => {
+  it("calls onDetected via BarcodeDetector (primary path)", async () => {
     mockBarcodeDetectorDetect.mockResolvedValue([{ rawValue: "8718309975563" }]);
     const onDetected = vi.fn();
 
     render(<BarcodeScanner onDetected={onDetected} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    fireCanPlay(video);
-    await waitFor(() => screen.getByRole("button", { name: "Scan" }));
+    await act(async () => { fireCanPlay(video); });
 
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Scan" })); });
+    await advanceDecode();
 
-    await waitFor(() => { expect(onDetected).toHaveBeenCalledWith("8718309975563"); });
+    expect(onDetected).toHaveBeenCalledWith("8718309975563");
   });
 
-  it("falls back to ZXing (original) when BarcodeDetector returns no results", async () => {
-    // call #1 succeeds
-    mockDecodeFromCanvas.mockImplementationOnce(() => ({ getText: () => "1234567890128" }));
+  it("calls onDetected via ZBar WASM when BarcodeDetector returns no results", async () => {
+    mockScanImageData.mockResolvedValue([{ decode: () => "1234567890128", typeName: "ZBAR_EAN13" }]);
     const onDetected = vi.fn();
 
     render(<BarcodeScanner onDetected={onDetected} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    fireCanPlay(video);
-    await waitFor(() => screen.getByRole("button", { name: "Scan" }));
+    await act(async () => { fireCanPlay(video); });
 
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Scan" })); });
+    await advanceDecode();
 
-    await waitFor(() => { expect(onDetected).toHaveBeenCalledWith("1234567890128"); });
+    expect(onDetected).toHaveBeenCalledWith("1234567890128");
   });
 
-  it("succeeds on 2x-scale fallback (call #2)", async () => {
-    mockDecodeFromCanvas
-      .mockImplementationOnce(throwNotFound)  // #1 original
-      .mockImplementationOnce(() => ({ getText: () => "5901234123457" })); // #2 2x-scale
+  it("calls onDetected via ZBar WASM when BarcodeDetector is absent", async () => {
+    const savedDetector = (global as unknown as Record<string, unknown>).BarcodeDetector;
+    delete (global as unknown as Record<string, unknown>).BarcodeDetector;
+
+    mockScanImageData.mockResolvedValue([{ decode: () => "5901234123457", typeName: "ZBAR_EAN13" }]);
     const onDetected = vi.fn();
 
     render(<BarcodeScanner onDetected={onDetected} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    fireCanPlay(video);
-    await waitFor(() => screen.getByRole("button", { name: "Scan" }));
+    await act(async () => { fireCanPlay(video); });
 
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Scan" })); });
+    await advanceDecode();
 
-    await waitFor(() => { expect(onDetected).toHaveBeenCalledWith("5901234123457"); });
+    expect(onDetected).toHaveBeenCalledWith("5901234123457");
+
+    (global as unknown as Record<string, unknown>).BarcodeDetector = savedDetector;
   });
 
-  it("succeeds on grayscale+contrast fallback (call #3)", async () => {
-    mockDecodeFromCanvas
-      .mockImplementationOnce(throwNotFound)  // #1 original
-      .mockImplementationOnce(throwNotFound)  // #2 2x-scale
-      .mockImplementation(() => ({ getText: () => "5901234123457" })); // #3+ base → success
+  it("stops decode loop after successful detection", async () => {
+    mockScanImageData.mockResolvedValue([{ decode: () => "5901234123457", typeName: "ZBAR_EAN13" }]);
     const onDetected = vi.fn();
 
     render(<BarcodeScanner onDetected={onDetected} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    fireCanPlay(video);
-    await waitFor(() => screen.getByRole("button", { name: "Scan" }));
+    await act(async () => { fireCanPlay(video); });
 
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Scan" })); });
-
-    await waitFor(() => { expect(onDetected).toHaveBeenCalledWith("5901234123457"); });
-  });
-
-  it("succeeds on adaptive threshold fallback — curved surface case (call #5)", async () => {
-    mockDecodeFromCanvas
-      .mockImplementationOnce(throwNotFound)  // #1 original
-      .mockImplementationOnce(throwNotFound)  // #2 2x-scale
-      .mockImplementationOnce(throwNotFound)  // #3 grayscale+contrast
-      .mockImplementationOnce(throwNotFound)  // #4 sharpen
-      .mockImplementation(() => ({ getText: () => "8719587223796" })); // #5+ base → success
-    const onDetected = vi.fn();
-
-    render(<BarcodeScanner onDetected={onDetected} />);
-    const video = document.querySelector("video")!;
-    await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    fireCanPlay(video);
-    await waitFor(() => screen.getByRole("button", { name: "Scan" }));
-
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Scan" })); });
-
-    await waitFor(() => { expect(onDetected).toHaveBeenCalledWith("8719587223796"); });
-  });
-
-  it("shows failed alert when all pipeline steps fail", async () => {
-    // permanent mock → all ZXing calls throw
-    render(<BarcodeScanner onDetected={vi.fn()} />);
-    const video = document.querySelector("video")!;
-    await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    fireCanPlay(video);
-    await waitFor(() => screen.getByRole("button", { name: "Scan" }));
-
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Scan" })); });
-
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeDefined();
-      expect(screen.getByRole("button", { name: "Try again" })).toBeDefined();
+    // Advance past two interval ticks
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DECODE_INTERVAL_MS * 2 + 100);
     });
-  });
 
-  it("resets to capturing state on Try again", async () => {
-    render(<BarcodeScanner onDetected={vi.fn()} />);
-    const video = document.querySelector("video")!;
-    await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    fireCanPlay(video);
-    await waitFor(() => screen.getByRole("button", { name: "Scan" }));
-
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Scan" })); });
-    await waitFor(() => screen.getByRole("button", { name: "Try again" }));
-
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Try again" })); });
-
-    await waitFor(() => { expect(screen.getByRole("button", { name: "Scan" })).toBeDefined(); });
+    // onDetected called exactly once — interval was cleared after first success
+    expect(onDetected).toHaveBeenCalledTimes(1);
   });
 
   it("shows permission denied error when getUserMedia rejects with NotAllowedError", async () => {
@@ -249,5 +210,33 @@ describe("BarcodeScanner", () => {
     unmount();
 
     expect(track.stop).toHaveBeenCalled();
+  });
+
+  it("shows torch button when device supports it", async () => {
+    mockGetUserMedia.mockResolvedValue(makeMockStream({ torch: true }));
+
+    render(<BarcodeScanner onDetected={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /flashlight/i })).toBeDefined();
+    });
+  });
+
+  it("toggles torch on and off", async () => {
+    const stream = makeMockStream({ torch: true });
+    const track = stream.getVideoTracks()[0] as MediaStreamTrack & { applyConstraints: ReturnType<typeof vi.fn> };
+    mockGetUserMedia.mockResolvedValue(stream);
+
+    render(<BarcodeScanner onDetected={vi.fn()} />);
+    await waitFor(() => screen.getByRole("button", { name: /Turn on flashlight/i }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Turn on flashlight/i }));
+    });
+
+    expect(track.applyConstraints).toHaveBeenCalledWith({
+      advanced: [{ torch: true }],
+    });
+    await waitFor(() => screen.getByRole("button", { name: /Turn off flashlight/i }));
   });
 });
