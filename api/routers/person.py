@@ -44,9 +44,7 @@ def sync_person(
     session: Annotated[Session, Depends(get_session)],
 ) -> PersonResponse:
     """Upsert Person row from JWT claims. Idempotent on repeated calls."""
-    existing = session.exec(
-        select(Person).where(Person.id == auth.person_id)
-    ).first()
+    existing = session.exec(select(Person).where(Person.id == auth.person_id)).first()
 
     if existing:
         return PersonResponse(
@@ -83,9 +81,7 @@ def update_profile(
     session: Annotated[Session, Depends(get_session)],
 ) -> PersonResponse:
     """Partial update of caller's profile fields (display_name)."""
-    person = session.exec(
-        select(Person).where(Person.id == auth.person_id)
-    ).first()
+    person = session.exec(select(Person).where(Person.id == auth.person_id)).first()
 
     if not person:
         raise HTTPException(
@@ -116,9 +112,7 @@ def update_prefs(
     session: Annotated[Session, Depends(get_session)],
 ) -> dict[str, Any]:
     """Partial update of caller's ui_prefs JSONB. Returns updated ui_prefs."""
-    person = session.exec(
-        select(Person).where(Person.id == auth.person_id)
-    ).first()
+    person = session.exec(select(Person).where(Person.id == auth.person_id)).first()
 
     if not person:
         raise HTTPException(

@@ -42,9 +42,7 @@ def list_reminders(
     auth: Annotated[PersonAuth, Depends(get_person_auth)],
     session: Annotated[Session, Depends(get_session)],
 ) -> list[ReminderResponse]:
-    reminders = session.exec(
-        select(Reminder).where(Reminder.person_id == auth.person_id)
-    ).all()
+    reminders = session.exec(select(Reminder).where(Reminder.person_id == auth.person_id)).all()
     return [_reminder_to_response(r) for r in reminders]
 
 

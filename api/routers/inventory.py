@@ -146,9 +146,7 @@ def _inventory_item_to_read(
     item: InventoryItem,
     canonical_product_name: str,
 ) -> InventoryItemRead:
-    expiry_date_str = (
-        item.expiry_date.strftime("%d-%m-%Y") if item.expiry_date else None
-    )
+    expiry_date_str = item.expiry_date.strftime("%d-%m-%Y") if item.expiry_date else None
     return InventoryItemRead(
         id=item.id,
         group_id=item.group_id,

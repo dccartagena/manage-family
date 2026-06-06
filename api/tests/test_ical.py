@@ -1,4 +1,5 @@
 """Failing tests for iCal feed — must fail before api/routers/ical.py is implemented."""
+
 import uuid
 from datetime import UTC, datetime, timedelta
 

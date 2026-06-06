@@ -66,9 +66,7 @@ def list_events(
             detail="Caller is not a member of this group",
         )
 
-    events = session.exec(
-        select(Event).where(Event.group_id == group_id)
-    ).all()
+    events = session.exec(select(Event).where(Event.group_id == group_id)).all()
     return [_event_to_response(e) for e in events]
 
 

@@ -45,9 +45,7 @@ def _build_ical_calendar(events: list[Event], reminders: list[Reminder]) -> byte
             vevent.add("RRULE", vRecur.from_ical(event.rrule))
             temp_cal.add_component(vevent)
 
-            occurrences = recurring_ical_events.of(temp_cal).between(
-                window_start, window_end
-            )
+            occurrences = recurring_ical_events.of(temp_cal).between(window_start, window_end)
             for occ in occurrences:
                 cal.add_component(occ)
         else:
@@ -92,9 +90,7 @@ def _get_reachable_group_ids(session: Session, person_id: uuid.UUID) -> set[uuid
     frontier: list[uuid.UUID] = list(reachable)
 
     while frontier:
-        children = session.exec(
-            select(Group.id).where(Group.parent_group_id.in_(frontier))
-        ).all()
+        children = session.exec(select(Group.id).where(Group.parent_group_id.in_(frontier))).all()
         new_children = set(children) - reachable
         reachable.update(new_children)
         frontier = list(new_children)
@@ -102,9 +98,7 @@ def _get_reachable_group_ids(session: Session, person_id: uuid.UUID) -> set[uuid
     return reachable
 
 
-def _fetch_reminders_for_person(
-    session: Session, person_id: uuid.UUID
-) -> list[Reminder]:
+def _fetch_reminders_for_person(session: Session, person_id: uuid.UUID) -> list[Reminder]:
     # Include delivered reminders and undelivered future reminders so the
     # calendar app shows both past alerts and upcoming ones.
     now = datetime.now(tz=UTC).replace(tzinfo=None)
@@ -116,16 +110,12 @@ def _fetch_reminders_for_person(
     ).all()
 
 
-def _fetch_events_for_person(
-    session: Session, person_id: uuid.UUID
-) -> list[Event]:
+def _fetch_events_for_person(session: Session, person_id: uuid.UUID) -> list[Event]:
     group_ids = _get_reachable_group_ids(session, person_id)
     if not group_ids:
         return []
 
-    return session.exec(
-        select(Event).where(Event.group_id.in_(list(group_ids)))
-    ).all()
+    return session.exec(select(Event).where(Event.group_id.in_(list(group_ids)))).all()
 
 
 @router.get("/ical/{secret}")
@@ -133,9 +123,7 @@ def get_ical_feed(
     secret: uuid.UUID,
     session: Annotated[Session, Depends(get_session)],
 ) -> Response:
-    person = session.exec(
-        select(Person).where(Person.ical_secret == secret)
-    ).first()
+    person = session.exec(select(Person).where(Person.ical_secret == secret)).first()
     if not person:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -157,9 +145,7 @@ def rotate_ical_secret(
     auth: Annotated[PersonAuth, Depends(get_person_auth)],
     session: Annotated[Session, Depends(get_session)],
 ) -> RotateResponse:
-    person = session.exec(
-        select(Person).where(Person.id == auth.person_id)
-    ).first()
+    person = session.exec(select(Person).where(Person.id == auth.person_id)).first()
     if not person:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -175,6 +161,4 @@ def rotate_ical_secret(
     if not app_url.startswith("http"):
         app_url = f"https://{app_url}"
 
-    return RotateResponse(
-        new_feed_url=f"{app_url}/api/v1/ical/{new_secret}"
-    )
+    return RotateResponse(new_feed_url=f"{app_url}/api/v1/ical/{new_secret}")

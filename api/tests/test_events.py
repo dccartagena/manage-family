@@ -1,4 +1,5 @@
 """Failing tests for events router — must fail before api/routers/events.py is implemented."""
+
 import uuid
 
 from api.main import app

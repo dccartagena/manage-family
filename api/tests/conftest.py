@@ -1,4 +1,5 @@
 """Shared pytest fixtures for API tests."""
+
 import uuid
 from collections.abc import Callable, Generator
 

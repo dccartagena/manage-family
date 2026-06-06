@@ -1,4 +1,5 @@
 """Failing tests for groups router — must fail before api/routers/groups.py is implemented."""
+
 import uuid
 
 from api.main import app
@@ -115,14 +116,10 @@ def test_leave_group_non_member_returns_403(make_auth_token) -> None:
     client.post("/api/v1/person/sync", headers=headers_owner)
     client.post("/api/v1/person/sync", headers=headers_other)
 
-    resp = client.post(
-        "/api/v1/groups", headers=headers_owner, json={"name": "Private Group"}
-    )
+    resp = client.post("/api/v1/groups", headers=headers_owner, json={"name": "Private Group"})
     group_id = resp.json()["id"]
 
-    response = client.delete(
-        f"/api/v1/groups/{group_id}/membership", headers=headers_other
-    )
+    response = client.delete(f"/api/v1/groups/{group_id}/membership", headers=headers_other)
     assert response.status_code == 403
 
 
@@ -133,9 +130,7 @@ def test_sole_member_departure_deletes_group(make_auth_token) -> None:
 
     client.post("/api/v1/person/sync", headers=headers)
 
-    resp = client.post(
-        "/api/v1/groups", headers=headers, json={"name": "Solo Group"}
-    )
+    resp = client.post("/api/v1/groups", headers=headers, json={"name": "Solo Group"})
     group_id = resp.json()["id"]
 
     leave = client.delete(f"/api/v1/groups/{group_id}/membership", headers=headers)
@@ -156,9 +151,7 @@ def test_owner_departure_promotes_oldest_member(make_auth_token) -> None:
     client.post("/api/v1/person/sync", headers=headers_owner)
     client.post("/api/v1/person/sync", headers=headers_member)
 
-    resp = client.post(
-        "/api/v1/groups", headers=headers_owner, json={"name": "Promo Group"}
-    )
+    resp = client.post("/api/v1/groups", headers=headers_owner, json={"name": "Promo Group"})
     group_id = resp.json()["id"]
 
     invite_resp = client.post(

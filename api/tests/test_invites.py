@@ -1,4 +1,5 @@
 """Failing tests for invites router — must fail before api/routers/invites.py is implemented."""
+
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -33,9 +34,7 @@ def test_create_invite_owner_only(make_auth_token) -> None:
     client.post("/api/v1/person/sync", headers=headers_owner)
     client.post("/api/v1/person/sync", headers=headers_member)
 
-    resp = client.post(
-        "/api/v1/groups", headers=headers_owner, json={"name": "Owner Only Group"}
-    )
+    resp = client.post("/api/v1/groups", headers=headers_owner, json={"name": "Owner Only Group"})
     group_id = resp.json()["id"]
 
     invite_resp = client.post(
@@ -94,9 +93,7 @@ def test_accept_invite_grants_membership(make_auth_token) -> None:
     client.post("/api/v1/person/sync", headers=headers_owner)
     client.post("/api/v1/person/sync", headers=headers_joiner)
 
-    resp = client.post(
-        "/api/v1/groups", headers=headers_owner, json={"name": "Join Test Group"}
-    )
+    resp = client.post("/api/v1/groups", headers=headers_owner, json={"name": "Join Test Group"})
     group_id = resp.json()["id"]
 
     invite_resp = client.post(
@@ -107,9 +104,7 @@ def test_accept_invite_grants_membership(make_auth_token) -> None:
     assert invite_resp.status_code == 201
     token_val = invite_resp.json()["token"]
 
-    accept_resp = client.post(
-        f"/api/v1/invites/{token_val}/accept", headers=headers_joiner
-    )
+    accept_resp = client.post(f"/api/v1/invites/{token_val}/accept", headers=headers_joiner)
     assert accept_resp.status_code == 200
     data = accept_resp.json()
     assert data["group_id"] == group_id
@@ -131,9 +126,7 @@ def test_accept_expired_invite_returns_410(make_auth_token) -> None:
     client.post("/api/v1/person/sync", headers=headers_owner)
     client.post("/api/v1/person/sync", headers=headers_joiner)
 
-    resp = client.post(
-        "/api/v1/groups", headers=headers_owner, json={"name": "Expired Group"}
-    )
+    resp = client.post("/api/v1/groups", headers=headers_owner, json={"name": "Expired Group"})
     group_id = resp.json()["id"]
 
     past = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
@@ -144,9 +137,7 @@ def test_accept_expired_invite_returns_410(make_auth_token) -> None:
     )
     token_val = invite_resp.json()["token"]
 
-    accept_resp = client.post(
-        f"/api/v1/invites/{token_val}/accept", headers=headers_joiner
-    )
+    accept_resp = client.post(f"/api/v1/invites/{token_val}/accept", headers=headers_joiner)
     assert accept_resp.status_code == 410
 
 
@@ -163,9 +154,7 @@ def test_accept_exhausted_invite_returns_410(make_auth_token) -> None:
     client.post("/api/v1/person/sync", headers=headers_j1)
     client.post("/api/v1/person/sync", headers=headers_j2)
 
-    resp = client.post(
-        "/api/v1/groups", headers=headers_owner, json={"name": "Exhausted Group"}
-    )
+    resp = client.post("/api/v1/groups", headers=headers_owner, json={"name": "Exhausted Group"})
     group_id = resp.json()["id"]
 
     invite_resp = client.post(

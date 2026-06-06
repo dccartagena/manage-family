@@ -29,21 +29,21 @@ vi.mock("@/lib/sync", () => ({
 
 const mockGroups = [{ id: "group-1", name: "Home", depth: 0, role: "owner" }];
 const mockItems = [
-  { id: "item-1", name: "Milk", checked: false, updated_at: "2026-06-03T10:00:00Z" },
-  { id: "item-2", name: "Eggs", checked: true, updated_at: "2026-06-03T10:00:00Z" },
+  { id: "item-1", group_id: "group-1", name: "Milk", checked: false, updated_at: "2026-06-03T10:00:00Z" },
+  { id: "item-2", group_id: "group-1", name: "Eggs", checked: true, updated_at: "2026-06-03T10:00:00Z" },
 ];
 
 global.fetch = vi.fn().mockImplementation((url: string) => {
-  if (url.includes("/api/v1/groups")) {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve(mockGroups),
-    });
-  }
   if (url.includes("/shopping")) {
     return Promise.resolve({
       ok: true,
       json: () => Promise.resolve(mockItems),
+    });
+  }
+  if (url.includes("/api/v1/groups")) {
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(mockGroups),
     });
   }
   return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });

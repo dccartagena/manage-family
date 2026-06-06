@@ -69,9 +69,7 @@ def list_shopping_items(
             detail="Caller is not a member of this group",
         )
 
-    items = session.exec(
-        select(ShoppingItem).where(ShoppingItem.group_id == group_id)
-    ).all()
+    items = session.exec(select(ShoppingItem).where(ShoppingItem.group_id == group_id)).all()
     return [_item_to_response(i) for i in items]
 
 

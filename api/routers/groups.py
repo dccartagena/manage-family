@@ -136,9 +136,7 @@ def leave_group(
             detail="Caller is not a member of this group",
         )
 
-    all_members = session.exec(
-        select(Membership).where(Membership.group_id == group_id)
-    ).all()
+    all_members = session.exec(select(Membership).where(Membership.group_id == group_id)).all()
 
     if len(all_members) == 1:
         # Sole member — delete group and cascade all associated data
@@ -174,9 +172,7 @@ def _delete_group_cascade(session: Session, group_id: uuid.UUID) -> None:
     for task in session.exec(select(Task).where(Task.group_id == group_id)).all():
         session.delete(task)
 
-    for item in session.exec(
-        select(ShoppingItem).where(ShoppingItem.group_id == group_id)
-    ).all():
+    for item in session.exec(select(ShoppingItem).where(ShoppingItem.group_id == group_id)).all():
         session.delete(item)
 
     for event in session.exec(select(Event).where(Event.group_id == group_id)).all():
@@ -185,9 +181,7 @@ def _delete_group_cascade(session: Session, group_id: uuid.UUID) -> None:
     for invite in session.exec(select(Invite).where(Invite.group_id == group_id)).all():
         session.delete(invite)
 
-    for m in session.exec(
-        select(Membership).where(Membership.group_id == group_id)
-    ).all():
+    for m in session.exec(select(Membership).where(Membership.group_id == group_id)).all():
         session.delete(m)
 
     group = session.get(Group, group_id)

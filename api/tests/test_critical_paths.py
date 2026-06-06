@@ -6,6 +6,7 @@ Covers:
 - Task done + next_occurrence recurrence
 - /jobs/tick correct-secret delivers reminders; wrong-secret returns 403
 """
+
 import uuid
 from collections.abc import Callable
 

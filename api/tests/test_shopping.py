@@ -1,4 +1,5 @@
 """Failing tests for shopping router — must fail before api/routers/shopping.py is implemented."""
+
 import uuid
 
 from api.main import app
@@ -15,17 +16,13 @@ def test_list_shopping_requires_auth() -> None:
 
 def test_add_shopping_requires_auth() -> None:
     """POST /groups/{id}/shopping without auth returns 401."""
-    response = client.post(
-        f"/api/v1/groups/{uuid.uuid4()}/shopping", json={"name": "Milk"}
-    )
+    response = client.post(f"/api/v1/groups/{uuid.uuid4()}/shopping", json={"name": "Milk"})
     assert response.status_code == 401
 
 
 def test_patch_shopping_requires_auth() -> None:
     """PATCH /shopping/{id} without auth returns 401."""
-    response = client.patch(
-        f"/api/v1/shopping/{uuid.uuid4()}", json={"checked": True}
-    )
+    response = client.patch(f"/api/v1/shopping/{uuid.uuid4()}", json={"checked": True})
     assert response.status_code == 401
 
 

@@ -1,4 +1,5 @@
 """Failing tests for dashboard — must fail before api/routers/dashboard.py is implemented."""
+
 from datetime import UTC, datetime, timedelta
 
 from api.main import app
@@ -52,7 +53,12 @@ def test_dashboard_overdue_tasks_include_group_name(make_auth_token) -> None:
     task_resp = client.post(
         f"/api/v1/groups/{group_id}/tasks",
         headers=headers,
-        json={"title": "Overdue chore", "rrule": None, "due_at": yesterday_noon, "assignee_id": None},  # noqa: E501
+        json={
+            "title": "Overdue chore",
+            "rrule": None,
+            "due_at": yesterday_noon,
+            "assignee_id": None,
+        },  # noqa: E501
     )
     assert task_resp.status_code == 201
     task_id = task_resp.json()["id"]

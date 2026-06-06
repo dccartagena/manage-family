@@ -1,41 +1,52 @@
-/**
- * Failing tests for login page — must fail before login/page.tsx is implemented.
- */
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import LoginPage from "../login/page";
 
-// Mock Supabase auth — login page calls supabase.auth.signInWithOtp
+const mockSignInWithPassword = vi.fn();
+const mockSignUp = vi.fn();
+
 vi.mock("@/lib/supabase", () => ({
   createAuthBrowserClient: () => ({
     auth: {
-      signInWithOtp: vi.fn().mockResolvedValue({ data: {}, error: null }),
+      signInWithPassword: mockSignInWithPassword,
+      signUp: mockSignUp,
     },
   }),
 }));
 
+global.fetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
+
 describe("LoginPage", () => {
-  it("renders email input and submit button", () => {
+  it("renders email input, password input, and submit button", () => {
     render(<LoginPage />);
     expect(screen.getByRole("textbox", { name: /email/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /send magic link/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it("transitions to confirmation state after submit", async () => {
+  it("shows error message on failed sign-in", async () => {
+    mockSignInWithPassword.mockResolvedValueOnce({
+      data: { session: null },
+      error: { message: "Invalid login credentials" },
+    });
+
     render(<LoginPage />);
 
     fireEvent.change(screen.getByRole("textbox", { name: /email/i }), {
       target: { value: "test@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /send magic link/i }));
+    fireEvent.change(screen.getByLabelText(/password/i), {
+      target: { value: "wrongpassword" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/check your email/i)).toBeInTheDocument();
+      expect(screen.getByRole("alert")).toHaveTextContent("Invalid login credentials");
     });
   });
 
-  it("does not show confirmation before submit", () => {
+  it("does not show error before submit", () => {
     render(<LoginPage />);
-    expect(screen.queryByText(/check your email/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

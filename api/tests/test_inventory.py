@@ -1,4 +1,5 @@
 """Integration tests for inventory router — Phases 3 & 4: US1 + US2."""
+
 import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -19,9 +20,7 @@ def _make_user_and_group(
     token = make_auth_token(email=email)
     headers = {"Authorization": f"Bearer {token}"}
     client.post("/api/v1/person/sync", headers=headers)
-    group_resp = client.post(
-        "/api/v1/groups", headers=headers, json={"name": group_name}
-    )
+    group_resp = client.post("/api/v1/groups", headers=headers, json={"name": group_name})
     assert group_resp.status_code == 201
     return token, group_resp.json()["id"], headers
 
@@ -70,9 +69,7 @@ def _create_canonical_product(headers: dict, group_id: str) -> str:
 # ────────────────────────────────────────────────────────────────
 
 
-def test_barcode_lookup_cache_hit_with_canonical_product(
-    db_session, make_auth_token
-) -> None:
+def test_barcode_lookup_cache_hit_with_canonical_product(db_session, make_auth_token) -> None:
     """(a) barcode in product_cache with canonical_product_id → 200 with populated field."""
     _, group_id, headers = _make_user_and_group(
         "barcode_cache@example.com", "Cache Group", make_auth_token
@@ -173,9 +170,7 @@ def test_create_canonical_product_member(make_auth_token) -> None:
 
 def test_create_canonical_product_non_member(make_auth_token) -> None:
     """(b) non-member → 403."""
-    _, group_id, _ = _make_user_and_group(
-        "cp_owner2@example.com", "CP Group 2", make_auth_token
-    )
+    _, group_id, _ = _make_user_and_group("cp_owner2@example.com", "CP Group 2", make_auth_token)
 
     other_token = make_auth_token(email="cp_outsider@example.com")
     other_headers = {"Authorization": f"Bearer {other_token}"}
@@ -216,9 +211,7 @@ def test_list_canonical_products_member(make_auth_token) -> None:
         },
     )
 
-    resp = client.get(
-        f"/api/v1/groups/{group_id}/canonical-products", headers=headers
-    )
+    resp = client.get(f"/api/v1/groups/{group_id}/canonical-products", headers=headers)
     assert resp.status_code == 200
     items = resp.json()
     assert len(items) == 1
@@ -235,9 +228,7 @@ def test_list_canonical_products_non_member(make_auth_token) -> None:
     other_headers = {"Authorization": f"Bearer {other_token}"}
     client.post("/api/v1/person/sync", headers=other_headers)
 
-    resp = client.get(
-        f"/api/v1/groups/{group_id}/canonical-products", headers=other_headers
-    )
+    resp = client.get(f"/api/v1/groups/{group_id}/canonical-products", headers=other_headers)
     assert resp.status_code == 403
 
 
@@ -384,9 +375,7 @@ def test_create_inventory_item_manual_no_barcode(make_auth_token) -> None:
     assert data["status"] == "ok"
 
 
-def test_create_inventory_item_updates_cache_association(
-    db_session, make_auth_token
-) -> None:
+def test_create_inventory_item_updates_cache_association(db_session, make_auth_token) -> None:
     """(c) new canonical association updates product_cache.canonical_product_id."""
     _, group_id, headers = _make_user_and_group(
         "inv_assoc@example.com", "Inv Assoc Group", make_auth_token
