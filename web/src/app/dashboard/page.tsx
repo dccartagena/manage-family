@@ -104,10 +104,17 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDashboard()
-      .then(setData)
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+    const supabase = createAuthBrowserClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        window.location.href = "/login";
+        return;
+      }
+      fetchDashboard()
+        .then(setData)
+        .catch((e: Error) => setError(e.message))
+        .finally(() => setLoading(false));
+    });
   }, []);
 
   const isEmpty =
