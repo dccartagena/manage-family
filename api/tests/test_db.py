@@ -1,4 +1,4 @@
-"""Tests for db layer — requires DATABASE_POOL_URL for the live-connection test."""
+"""Tests for db layer — requires POSTGRES_URL for the live-connection test."""
 
 import contextlib
 import os
@@ -8,11 +8,11 @@ from sqlmodel import Session, text
 
 
 @pytest.mark.skipif(
-    not os.environ.get("DATABASE_POOL_URL"),
-    reason="DATABASE_POOL_URL not set — skipping live DB connection test",
+    not os.environ.get("POSTGRES_URL"),
+    reason="POSTGRES_URL not set — skipping live DB connection test",
 )
 def test_get_session_yields_live_session() -> None:
-    """get_session dependency yields a live database session via DATABASE_POOL_URL."""
+    """get_session dependency yields a live database session via POSTGRES_URL."""
     from api.db import get_session
 
     gen = get_session()

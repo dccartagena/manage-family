@@ -15,9 +15,9 @@ target_metadata = SQLModel.metadata
 
 
 def _get_url() -> str:
-    url = os.environ.get("DATABASE_POOL_URL")
+    url = os.environ.get("POSTGRES_URL")
     if not url:
-        raise RuntimeError("DATABASE_POOL_URL env var is not set")
+        raise RuntimeError("POSTGRES_URL env var is not set")
     return url
 
 
