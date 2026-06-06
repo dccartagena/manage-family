@@ -115,8 +115,8 @@ def upgrade() -> None:
     op.execute("CREATE INDEX IF NOT EXISTS idx_shopping_items_group_id ON shopping_items(group_id)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_events_group_starts ON events(group_id, starts_at)")
     op.execute(
-        "CREATE INDEX IF NOT EXISTS idx_reminders_person_delivered_fire ON reminders(person_id, delivered, fire_at)"
-    )  # noqa: E501
+        "CREATE INDEX IF NOT EXISTS idx_reminders_person_delivered_fire ON reminders(person_id, delivered, fire_at)"  # noqa: E501
+    )
     op.execute("CREATE INDEX IF NOT EXISTS idx_invites_token ON invites(token)")
 
     # updated_at auto-trigger for tasks and shopping_items
