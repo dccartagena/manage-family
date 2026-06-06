@@ -130,7 +130,9 @@ export default function GroupDetailPage() {
   if (!group) {
     return (
       <main className="mx-auto max-w-md p-6">
-        <p role="alert" className="text-sm text-destructive">{error || "Household not found"}</p>
+        <p role="alert" className="text-sm text-destructive">
+          {error || "Household not found"}
+        </p>
         <button
           type="button"
           onClick={() => router.push("/groups")}
@@ -156,9 +158,7 @@ export default function GroupDetailPage() {
         <h1 className="text-xl font-semibold">{group.name}</h1>
         <span
           className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${
-            group.role === "owner"
-              ? "bg-primary/10 text-primary"
-              : "bg-muted text-muted-foreground"
+            group.role === "owner" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
           }`}
         >
           {group.role}
@@ -175,11 +175,13 @@ export default function GroupDetailPage() {
         <section className="space-y-3 rounded-lg border border-border p-4">
           <h2 className="text-sm font-medium">Invite members</h2>
           {inviteError && (
-            <p role="alert" className="text-xs text-destructive">{inviteError}</p>
+            <p role="alert" className="text-xs text-destructive">
+              {inviteError}
+            </p>
           )}
           {inviteUrl ? (
             <div className="space-y-2">
-              <p className="break-all rounded bg-muted px-3 py-2 text-xs font-mono">{inviteUrl}</p>
+              <p className="break-all rounded bg-muted px-3 py-2 font-mono text-xs">{inviteUrl}</p>
               <button
                 type="button"
                 onClick={handleCopyInvite}
@@ -214,8 +216,8 @@ export default function GroupDetailPage() {
             <p className="text-sm font-medium">Leave this household?</p>
             {group.role === "owner" && (
               <p className="text-xs text-muted-foreground">
-                As the owner, leaving may permanently delete this household and all its data if
-                you are the only member.
+                As the owner, leaving may permanently delete this household and all its data if you
+                are the only member.
               </p>
             )}
             <div className="flex gap-2">

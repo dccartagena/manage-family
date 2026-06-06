@@ -41,7 +41,7 @@ async function createTask(
   title: string,
   rrule: string | null,
   dueAt: string | null,
-  assigneeId: string | null,
+  assigneeId: string | null
 ): Promise<void> {
   const token = await fetchAccessToken();
   if (!token) throw new Error("Not authenticated");

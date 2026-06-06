@@ -9,7 +9,7 @@ const mockListInventory = vi.fn<() => Promise<InventoryItem[]>>();
 const mockUpdateInventoryItem = vi.fn();
 
 vi.mock("@/lib/inventory", () => ({
-  listInventory: (...args: unknown[]) => mockListInventory(...args as []),
+  listInventory: (...args: unknown[]) => mockListInventory(...(args as [])),
   updateInventoryItem: (...args: unknown[]) => mockUpdateInventoryItem(...args),
 }));
 
@@ -131,8 +131,14 @@ describe("InventoryPage", () => {
       makeItem({ id: "1", name: "Cycle Item", status: "ok", location: "fridge" }),
     ]);
     mockUpdateInventoryItem.mockResolvedValue(
-      makeItem({ id: "1", name: "Cycle Item", status: "low", location: "fridge",
-        shopping_item_created: false, shopping_item_name: null } as InventoryItem),
+      makeItem({
+        id: "1",
+        name: "Cycle Item",
+        status: "low",
+        location: "fridge",
+        shopping_item_created: false,
+        shopping_item_name: null,
+      } as InventoryItem)
     );
 
     render(<InventoryPage />);
@@ -145,11 +151,7 @@ describe("InventoryPage", () => {
     fireEvent.click(cycleBtn);
 
     await waitFor(() => {
-      expect(mockUpdateInventoryItem).toHaveBeenCalledWith(
-        "1",
-        { status: "low" },
-        "test-token",
-      );
+      expect(mockUpdateInventoryItem).toHaveBeenCalledWith("1", { status: "low" }, "test-token");
     });
   });
 });

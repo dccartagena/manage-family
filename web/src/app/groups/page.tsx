@@ -82,9 +82,7 @@ export default function GroupsPage() {
                 <div className="space-y-1">
                   <p className="font-medium">{group.name}</p>
                   {group.depth > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Level {group.depth}
-                    </p>
+                    <p className="text-xs text-muted-foreground">Level {group.depth}</p>
                   )}
                 </div>
                 <span

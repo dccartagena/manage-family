@@ -12,9 +12,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/supabase", () => ({
   createAuthBrowserClient: () => ({
     auth: {
-      getSession: vi
-        .fn()
-        .mockResolvedValue({ data: { session: { access_token: "tok" } } }),
+      getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: "tok" } } }),
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }),
     },
   }),

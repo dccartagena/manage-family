@@ -6,12 +6,11 @@
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { createAuthBrowserClient } from "@/lib/supabase";
 
-export type ShoppingRealtimePayload =
-  RealtimePostgresChangesPayload<Record<string, unknown>>;
+export type ShoppingRealtimePayload = RealtimePostgresChangesPayload<Record<string, unknown>>;
 
 export function subscribeToShopping(
   groupId: string,
-  onPayload: (payload: ShoppingRealtimePayload) => void,
+  onPayload: (payload: ShoppingRealtimePayload) => void
 ): () => void {
   const supabase = createAuthBrowserClient();
 
@@ -25,7 +24,7 @@ export function subscribeToShopping(
         table: "shopping_items",
         filter: `group_id=eq.${groupId}`,
       },
-      onPayload,
+      onPayload
     )
     .subscribe();
 

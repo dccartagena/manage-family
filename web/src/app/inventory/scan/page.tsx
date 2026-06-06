@@ -57,14 +57,10 @@ async function fetchGroups(): Promise<GroupItem[]> {
   return response.json() as Promise<GroupItem[]>;
 }
 
-function computeExpiryDate(
-  canonicalProduct: CanonicalProduct | undefined,
-): string {
+function computeExpiryDate(canonicalProduct: CanonicalProduct | undefined): string {
   const days =
     canonicalProduct?.expiry_days_default ??
-    (canonicalProduct
-      ? EXPIRY_DAYS_BY_CATEGORY[canonicalProduct.category] ?? null
-      : null);
+    (canonicalProduct ? (EXPIRY_DAYS_BY_CATEGORY[canonicalProduct.category] ?? null) : null);
   if (!days) return "";
   const d = new Date();
   d.setDate(d.getDate() + days);
@@ -79,9 +75,7 @@ export default function ScanPage() {
   const searchParams = useSearchParams();
   const groupFromUrl = searchParams.get("group");
   const [state, setState] = useState<PageState>(
-    groupFromUrl
-      ? { stage: "scanning", groupId: groupFromUrl }
-      : { stage: "group-select" },
+    groupFromUrl ? { stage: "scanning", groupId: groupFromUrl } : { stage: "group-select" }
   );
   const [groups, setGroups] = useState<GroupItem[]>([]);
   const [groupsError, setGroupsError] = useState<string | null>(null);
@@ -121,7 +115,7 @@ export default function ScanPage() {
         ]);
 
         const matchingCp = lookupResult.canonical_product_id
-          ? cps.find((cp) => cp.id === lookupResult.canonical_product_id) ?? null
+          ? (cps.find((cp) => cp.id === lookupResult.canonical_product_id) ?? null)
           : null;
 
         setState({
@@ -155,14 +149,11 @@ export default function ScanPage() {
         }
       }
     },
-    [state],
+    [state]
   );
 
   async function handleSave() {
-    if (
-      state.stage !== "product-form" &&
-      state.stage !== "manual-form"
-    ) {
+    if (state.stage !== "product-form" && state.stage !== "manual-form") {
       return;
     }
 
@@ -186,7 +177,7 @@ export default function ScanPage() {
             is_staple: false,
             usual_location: formLocation,
           },
-          token,
+          token
         );
         resolvedCanonicalId = cp.id;
       }
@@ -212,7 +203,7 @@ export default function ScanPage() {
       setState(
         state.stage === "product-form"
           ? { stage: "product-form", groupId, barcode: state.barcode, prefill: state.prefill }
-          : { stage: "manual-form", groupId, barcode: state.barcode },
+          : { stage: "manual-form", groupId, barcode: state.barcode }
       );
     }
   }
@@ -223,9 +214,7 @@ export default function ScanPage() {
     return (
       <main className="mx-auto max-w-md p-4">
         <h1 className="mb-4 text-xl font-semibold">Scan Item</h1>
-        {groupsError && (
-          <p className="mb-3 text-sm text-destructive">{groupsError}</p>
-        )}
+        {groupsError && <p className="mb-3 text-sm text-destructive">{groupsError}</p>}
         <p className="mb-3 text-sm text-muted-foreground">Select a household:</p>
         <ul className="space-y-2">
           {groups.map((g) => (
@@ -247,15 +236,11 @@ export default function ScanPage() {
     return (
       <main className="mx-auto max-w-md p-4">
         <h1 className="mb-4 text-xl font-semibold">Scan Barcode</h1>
-        {formError && (
-          <p className="mb-3 text-sm text-destructive">{formError}</p>
-        )}
+        {formError && <p className="mb-3 text-sm text-destructive">{formError}</p>}
         <BarcodeScanner onDetected={handleBarcodeDetected} />
         <button
           className="mt-4 w-full rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-accent"
-          onClick={() =>
-            setState({ stage: "manual-form", groupId: state.groupId, barcode: null })
-          }
+          onClick={() => setState({ stage: "manual-form", groupId: state.groupId, barcode: null })}
         >
           Enter manually instead
         </button>
@@ -302,9 +287,7 @@ export default function ScanPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
-              Expiry date (DD-MM-YYYY)
-            </label>
+            <label className="mb-1 block text-sm font-medium">Expiry date (DD-MM-YYYY)</label>
             <input
               className="w-full rounded-lg border border-border px-3 py-2 text-sm"
               placeholder="e.g. 10-06-2026"
@@ -314,9 +297,7 @@ export default function ScanPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
-              Canonical product
-            </label>
+            <label className="mb-1 block text-sm font-medium">Canonical product</label>
             <select
               className="w-full rounded-lg border border-border px-3 py-2 text-sm"
               value={formCanonicalId ?? ""}
@@ -346,9 +327,7 @@ export default function ScanPage() {
         <div className="mt-6 flex gap-3">
           <button
             className="flex-1 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"
-            onClick={() =>
-              setState({ stage: "scanning", groupId: state.groupId })
-            }
+            onClick={() => setState({ stage: "scanning", groupId: state.groupId })}
           >
             Back
           </button>

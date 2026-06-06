@@ -96,7 +96,10 @@ export default function JoinPage() {
       </div>
 
       {error && (
-        <p role="alert" className="max-w-sm rounded border border-destructive p-2 text-sm text-destructive">
+        <p
+          role="alert"
+          className="max-w-sm rounded border border-destructive p-2 text-sm text-destructive"
+        >
           {error}
         </p>
       )}

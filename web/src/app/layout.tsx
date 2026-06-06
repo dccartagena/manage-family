@@ -27,9 +27,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default async function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = cookies();
   const supabase = createAuthServerClient(cookieStore);
   const {
@@ -37,8 +35,8 @@ export default async function RootLayout({
   } = await supabase.auth.getUser();
 
   const uiPrefs =
-    (user as { user_metadata?: { ui_prefs?: Record<string, string> } } | null)
-      ?.user_metadata?.ui_prefs ?? {};
+    (user as { user_metadata?: { ui_prefs?: Record<string, string> } } | null)?.user_metadata
+      ?.ui_prefs ?? {};
 
   const textSize = uiPrefs["text_size"] ?? "normal";
   const contrast = uiPrefs["contrast"] === "high";

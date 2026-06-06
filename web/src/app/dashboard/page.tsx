@@ -92,7 +92,9 @@ function EventItem({ event }: { event: DashboardEvent }) {
 }
 
 function SectionHeader({ title }: { title: string }) {
-  return <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>;
+  return (
+    <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
+  );
 }
 
 export default function DashboardPage() {

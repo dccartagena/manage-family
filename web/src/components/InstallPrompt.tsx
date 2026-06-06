@@ -8,8 +8,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -33,10 +32,7 @@ export function InstallPrompt() {
   }
 
   return (
-    <div
-      role="banner"
-      className="fixed bottom-16 left-0 right-0 z-40 mx-auto max-w-md px-4"
-    >
+    <div role="banner" className="fixed bottom-16 left-0 right-0 z-40 mx-auto max-w-md px-4">
       <div className="flex items-center justify-between rounded-lg border border-border bg-background p-3 shadow-md">
         <span className="text-sm font-medium">Add to Home Screen</span>
         <div className="flex gap-2">

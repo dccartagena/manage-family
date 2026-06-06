@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, CheckSquare, Home, Package, Settings, ShoppingCart } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  CheckSquare,
+  Home,
+  Package,
+  Settings,
+  ShoppingCart,
+} from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -32,9 +40,7 @@ export function BottomNav() {
                 aria-label={label}
                 aria-current={isActive ? "page" : undefined}
                 className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors ${
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden="true" />

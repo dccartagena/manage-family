@@ -92,12 +92,11 @@ export async function lookupBarcode(barcode: string): Promise<ProductLookupResul
 
 export async function listCanonicalProducts(
   groupId: string,
-  token: string,
+  token: string
 ): Promise<CanonicalProduct[]> {
-  const response = await fetch(
-    `${API_URL}/api/v1/groups/${groupId}/canonical-products`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
+  const response = await fetch(`${API_URL}/api/v1/groups/${groupId}/canonical-products`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!response.ok) {
     throw new Error(`Failed to list canonical products: ${response.status}`);
   }
@@ -107,19 +106,16 @@ export async function listCanonicalProducts(
 export async function createCanonicalProduct(
   groupId: string,
   body: CreateCanonicalProductRequest,
-  token: string,
+  token: string
 ): Promise<CanonicalProduct> {
-  const response = await fetch(
-    `${API_URL}/api/v1/groups/${groupId}/canonical-products`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
+  const response = await fetch(`${API_URL}/api/v1/groups/${groupId}/canonical-products`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(body),
+  });
   if (!response.ok) {
     throw new Error(`Failed to create canonical product: ${response.status}`);
   }
@@ -129,33 +125,26 @@ export async function createCanonicalProduct(
 export async function updateCanonicalProduct(
   canonicalProductId: string,
   body: UpdateCanonicalProductRequest,
-  token: string,
+  token: string
 ): Promise<CanonicalProduct> {
-  const response = await fetch(
-    `${API_URL}/api/v1/canonical-products/${canonicalProductId}`,
-    {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
+  const response = await fetch(`${API_URL}/api/v1/canonical-products/${canonicalProductId}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(body),
+  });
   if (!response.ok) {
     throw new Error(`Failed to update canonical product: ${response.status}`);
   }
   return response.json() as Promise<CanonicalProduct>;
 }
 
-export async function listInventory(
-  groupId: string,
-  token: string,
-): Promise<InventoryItem[]> {
-  const response = await fetch(
-    `${API_URL}/api/v1/groups/${groupId}/inventory`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
+export async function listInventory(groupId: string, token: string): Promise<InventoryItem[]> {
+  const response = await fetch(`${API_URL}/api/v1/groups/${groupId}/inventory`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!response.ok) {
     throw new Error(`Failed to list inventory: ${response.status}`);
   }
@@ -165,19 +154,16 @@ export async function listInventory(
 export async function createInventoryItem(
   groupId: string,
   body: CreateInventoryItemRequest,
-  token: string,
+  token: string
 ): Promise<InventoryItem> {
-  const response = await fetch(
-    `${API_URL}/api/v1/groups/${groupId}/inventory`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
+  const response = await fetch(`${API_URL}/api/v1/groups/${groupId}/inventory`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(body),
+  });
   if (!response.ok) {
     throw new Error(`Failed to create inventory item: ${response.status}`);
   }
@@ -187,7 +173,7 @@ export async function createInventoryItem(
 export async function updateInventoryItem(
   itemId: string,
   body: UpdateInventoryItemRequest,
-  token: string,
+  token: string
 ): Promise<InventoryItemUpdateResponse> {
   const response = await fetch(`${API_URL}/api/v1/inventory/${itemId}`, {
     method: "PATCH",
@@ -206,7 +192,7 @@ export async function updateInventoryItem(
 export async function deleteInventoryItem(
   itemId: string,
   body: DeleteInventoryItemRequest,
-  token: string,
+  token: string
 ): Promise<void> {
   const response = await fetch(`${API_URL}/api/v1/inventory/${itemId}`, {
     method: "DELETE",
@@ -224,19 +210,16 @@ export async function deleteInventoryItem(
 export async function fromShoppingItems(
   groupId: string,
   shoppingItemIds: string[],
-  token: string,
+  token: string
 ): Promise<LoopCloseResult> {
-  const response = await fetch(
-    `${API_URL}/api/v1/groups/${groupId}/inventory/from-shopping`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ shopping_item_ids: shoppingItemIds }),
+  const response = await fetch(`${API_URL}/api/v1/groups/${groupId}/inventory/from-shopping`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({ shopping_item_ids: shoppingItemIds }),
+  });
   if (!response.ok) {
     throw new Error(`Failed to loop-close shopping items: ${response.status}`);
   }

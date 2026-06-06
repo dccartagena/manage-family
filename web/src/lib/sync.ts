@@ -32,7 +32,7 @@ function openDb(): Promise<IDBDatabase> {
 }
 
 export async function enqueueShoppingMutation(
-  mutation: Omit<ShoppingMutation, "id">,
+  mutation: Omit<ShoppingMutation, "id">
 ): Promise<void> {
   const db = await openDb();
   return new Promise((resolve, reject) => {
@@ -74,10 +74,9 @@ export async function drainShoppingQueue(): Promise<void> {
 
   for (const mutation of mutations) {
     // Fetch current server state to check updated_at for last-write-wins
-    const serverResp = await fetch(
-      `${API_URL}/api/v1/shopping/${mutation.itemId}`,
-      { headers: { Authorization: `Bearer ${mutation.accessToken}` } },
-    ).catch(() => null);
+    const serverResp = await fetch(`${API_URL}/api/v1/shopping/${mutation.itemId}`, {
+      headers: { Authorization: `Bearer ${mutation.accessToken}` },
+    }).catch(() => null);
 
     if (serverResp?.ok) {
       const serverItem = (await serverResp.json()) as ShoppingItemRecord;
@@ -88,17 +87,14 @@ export async function drainShoppingQueue(): Promise<void> {
       }
     }
 
-    const patchResp = await fetch(
-      `${API_URL}/api/v1/shopping/${mutation.itemId}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${mutation.accessToken}`,
-        },
-        body: JSON.stringify(mutation.payload),
+    const patchResp = await fetch(`${API_URL}/api/v1/shopping/${mutation.itemId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${mutation.accessToken}`,
       },
-    ).catch(() => null);
+      body: JSON.stringify(mutation.payload),
+    }).catch(() => null);
 
     if (patchResp?.ok) {
       await deleteMutation(mutation.id);

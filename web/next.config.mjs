@@ -11,7 +11,7 @@ const nextConfig = {
       ...config.resolve.alias,
       "@undecaf/zbar-wasm": new URL(
         "./node_modules/@undecaf/zbar-wasm/dist/inlined/index.mjs",
-        import.meta.url,
+        import.meta.url
       ).pathname,
     };
     return config;

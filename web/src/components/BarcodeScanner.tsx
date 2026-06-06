@@ -112,7 +112,9 @@ export default function BarcodeScanner({ onDetected }: BarcodeScannerProps) {
             onDetectedRef.current(results[0].rawValue);
             return;
           }
-        } catch { /* fall through to ZBar */ }
+        } catch {
+          /* fall through to ZBar */
+        }
       }
 
       // 2. ZBar WASM on guide-region crop
@@ -195,9 +197,7 @@ export default function BarcodeScanner({ onDetected }: BarcodeScannerProps) {
         <p className="text-center text-xs text-muted-foreground">Starting camera…</p>
       )}
       {phase === "scanning" && (
-        <p className="text-center text-xs text-muted-foreground">
-          Align barcode with the frame
-        </p>
+        <p className="text-center text-xs text-muted-foreground">Align barcode with the frame</p>
       )}
 
       {torchSupported && (

@@ -104,7 +104,9 @@ describe("BarcodeScanner", () => {
     render(<BarcodeScanner onDetected={vi.fn()} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    await act(async () => { fireCanPlay(video); });
+    await act(async () => {
+      fireCanPlay(video);
+    });
     await waitFor(() => {
       expect(screen.getByText("Align barcode with the frame")).toBeDefined();
     });
@@ -117,7 +119,9 @@ describe("BarcodeScanner", () => {
     render(<BarcodeScanner onDetected={onDetected} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    await act(async () => { fireCanPlay(video); });
+    await act(async () => {
+      fireCanPlay(video);
+    });
 
     await advanceDecode();
 
@@ -125,13 +129,17 @@ describe("BarcodeScanner", () => {
   });
 
   it("calls onDetected via ZBar WASM when BarcodeDetector returns no results", async () => {
-    mockScanImageData.mockResolvedValue([{ decode: () => "1234567890128", typeName: "ZBAR_EAN13" }]);
+    mockScanImageData.mockResolvedValue([
+      { decode: () => "1234567890128", typeName: "ZBAR_EAN13" },
+    ]);
     const onDetected = vi.fn();
 
     render(<BarcodeScanner onDetected={onDetected} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    await act(async () => { fireCanPlay(video); });
+    await act(async () => {
+      fireCanPlay(video);
+    });
 
     await advanceDecode();
 
@@ -142,13 +150,17 @@ describe("BarcodeScanner", () => {
     const savedDetector = (global as unknown as Record<string, unknown>).BarcodeDetector;
     delete (global as unknown as Record<string, unknown>).BarcodeDetector;
 
-    mockScanImageData.mockResolvedValue([{ decode: () => "5901234123457", typeName: "ZBAR_EAN13" }]);
+    mockScanImageData.mockResolvedValue([
+      { decode: () => "5901234123457", typeName: "ZBAR_EAN13" },
+    ]);
     const onDetected = vi.fn();
 
     render(<BarcodeScanner onDetected={onDetected} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    await act(async () => { fireCanPlay(video); });
+    await act(async () => {
+      fireCanPlay(video);
+    });
 
     await advanceDecode();
 
@@ -158,13 +170,17 @@ describe("BarcodeScanner", () => {
   });
 
   it("stops decode loop after successful detection", async () => {
-    mockScanImageData.mockResolvedValue([{ decode: () => "5901234123457", typeName: "ZBAR_EAN13" }]);
+    mockScanImageData.mockResolvedValue([
+      { decode: () => "5901234123457", typeName: "ZBAR_EAN13" },
+    ]);
     const onDetected = vi.fn();
 
     render(<BarcodeScanner onDetected={onDetected} />);
     const video = document.querySelector("video")!;
     await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
-    await act(async () => { fireCanPlay(video); });
+    await act(async () => {
+      fireCanPlay(video);
+    });
 
     // Advance past two interval ticks
     await act(async () => {
@@ -176,9 +192,7 @@ describe("BarcodeScanner", () => {
   });
 
   it("shows permission denied error when getUserMedia rejects with NotAllowedError", async () => {
-    mockGetUserMedia.mockRejectedValue(
-      new DOMException("Permission denied", "NotAllowedError"),
-    );
+    mockGetUserMedia.mockRejectedValue(new DOMException("Permission denied", "NotAllowedError"));
 
     render(<BarcodeScanner onDetected={vi.fn()} />);
 
@@ -224,7 +238,9 @@ describe("BarcodeScanner", () => {
 
   it("toggles torch on and off", async () => {
     const stream = makeMockStream({ torch: true });
-    const track = stream.getVideoTracks()[0] as MediaStreamTrack & { applyConstraints: ReturnType<typeof vi.fn> };
+    const track = stream.getVideoTracks()[0] as MediaStreamTrack & {
+      applyConstraints: ReturnType<typeof vi.fn>;
+    };
     mockGetUserMedia.mockResolvedValue(stream);
 
     render(<BarcodeScanner onDetected={vi.fn()} />);

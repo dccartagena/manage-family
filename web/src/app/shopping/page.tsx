@@ -51,7 +51,7 @@ async function fetchShoppingItems(groupId: string): Promise<ShoppingItem[]> {
 
 async function patchItem(
   itemId: string,
-  payload: { name?: string; checked?: boolean },
+  payload: { name?: string; checked?: boolean }
 ): Promise<ShoppingItem> {
   const token = await fetchAccessToken();
   if (!token) throw new Error("Not authenticated");
@@ -101,7 +101,7 @@ export default function ShoppingPage() {
   const [itemsLoading, setItemsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isOnline, setIsOnline] = useState(
-    typeof navigator !== "undefined" ? navigator.onLine : true,
+    typeof navigator !== "undefined" ? navigator.onLine : true
   );
   const [newItemName, setNewItemName] = useState("");
   const [adding, setAdding] = useState(false);
@@ -118,9 +118,7 @@ export default function ShoppingPage() {
       });
     } else if (eventType === "UPDATE" && newRecord) {
       const updated = newRecord as unknown as ShoppingItem;
-      setItems((prev) =>
-        prev.map((i) => (i.id === updated.id ? updated : i)),
-      );
+      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
     } else if (eventType === "DELETE" && oldRecord) {
       const deleted = oldRecord as { id: string };
       setItems((prev) => prev.filter((i) => i.id !== deleted.id));
@@ -154,10 +152,7 @@ export default function ShoppingPage() {
         setItems(loaded);
         // Subscribe to real-time after initial load
         // Approved FR-023 infrastructure exception: Realtime subscription, not a table query
-        cleanupRealtimeRef.current = subscribeToShopping(
-          selectedGroupId,
-          applyRealtimePayload,
-        );
+        cleanupRealtimeRef.current = subscribeToShopping(selectedGroupId, applyRealtimePayload);
       })
       .catch((err: Error) => setError(err.message))
       .finally(() => setItemsLoading(false));
@@ -193,17 +188,13 @@ export default function ShoppingPage() {
     const newChecked = !item.checked;
 
     // Optimistic update
-    setItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, checked: newChecked } : i)),
-    );
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, checked: newChecked } : i)));
 
     try {
       await patchItem(item.id, { checked: newChecked });
     } catch {
       // Revert optimistic update
-      setItems((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, checked: item.checked } : i)),
-      );
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, checked: item.checked } : i)));
 
       if (!isOnline) {
         const token = await fetchAccessToken();
@@ -217,9 +208,7 @@ export default function ShoppingPage() {
           });
           // Re-apply optimistic update after queuing
           setItems((prev) =>
-            prev.map((i) =>
-              i.id === item.id ? { ...i, checked: newChecked } : i,
-            ),
+            prev.map((i) => (i.id === item.id ? { ...i, checked: newChecked } : i))
           );
         }
       }
@@ -282,10 +271,7 @@ export default function ShoppingPage() {
       </div>
 
       {error && (
-        <p
-          role="alert"
-          className="rounded border border-destructive p-2 text-sm text-destructive"
-        >
+        <p role="alert" className="rounded border border-destructive p-2 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -308,11 +294,7 @@ export default function ShoppingPage() {
       {groups.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No households yet.{" "}
-          <button
-            type="button"
-            onClick={() => router.push("/groups/new")}
-            className="underline"
-          >
+          <button type="button" onClick={() => router.push("/groups/new")} className="underline">
             Create one
           </button>{" "}
           to start a shopping list.
@@ -350,9 +332,7 @@ export default function ShoppingPage() {
                   key={item.id}
                   data-checked={item.checked ? "true" : undefined}
                   className={`flex items-center gap-3 rounded-lg border p-3 ${
-                    item.checked
-                      ? "border-border bg-muted opacity-60"
-                      : "border-border bg-card"
+                    item.checked ? "border-border bg-muted opacity-60" : "border-border bg-card"
                   }`}
                 >
                   <button
@@ -385,7 +365,7 @@ export default function ShoppingPage() {
                   </button>
 
                   <span
-                    className={`flex-1 text-sm ${item.checked ? "line-through text-muted-foreground" : ""}`}
+                    className={`flex-1 text-sm ${item.checked ? "text-muted-foreground line-through" : ""}`}
                   >
                     {item.name}
                   </span>

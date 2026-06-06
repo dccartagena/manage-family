@@ -57,9 +57,7 @@ export default function EventDetailPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const groupsResp = await fetch(`${API_URL}/api/v1/groups`, { headers });
-      const groups: Group[] = groupsResp.ok
-        ? ((await groupsResp.json()) as Group[])
-        : [];
+      const groups: Group[] = groupsResp.ok ? ((await groupsResp.json()) as Group[]) : [];
 
       const groupIds = groups.map((g) => g.id);
 

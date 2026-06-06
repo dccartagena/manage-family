@@ -53,7 +53,10 @@ async function fetchTask(taskId: string): Promise<Task | null> {
   return response.json() as Promise<Task>;
 }
 
-async function patchTask(taskId: string, updates: Partial<Pick<Task, "title" | "assignee_id" | "due_at" | "rrule">>): Promise<Task> {
+async function patchTask(
+  taskId: string,
+  updates: Partial<Pick<Task, "title" | "assignee_id" | "due_at" | "rrule">>
+): Promise<Task> {
   const token = await fetchAccessToken();
   if (!token) throw new Error("Not authenticated");
   const response = await fetch(`${API_URL}/api/v1/tasks/${taskId}`, {
@@ -216,9 +219,7 @@ export default function TaskDetailPage() {
     );
   }
 
-  const rruleLabel = task.rrule
-    ? (RRULE_LABELS[task.rrule] ?? task.rrule)
-    : null;
+  const rruleLabel = task.rrule ? (RRULE_LABELS[task.rrule] ?? task.rrule) : null;
 
   return (
     <main className="mx-auto max-w-md space-y-6 p-6">
@@ -355,7 +356,7 @@ export default function TaskDetailPage() {
 
       {/* Next occurrence (shown after marking done for recurring tasks) */}
       {nextOccurrence && (
-        <section className="rounded-lg border border-border bg-card p-4 space-y-1">
+        <section className="space-y-1 rounded-lg border border-border bg-card p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Next occurrence created
           </p>

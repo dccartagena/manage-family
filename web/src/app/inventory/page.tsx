@@ -112,33 +112,26 @@ export default function InventoryPage() {
       });
   }, [selectedGroupId]);
 
-  const handleCycleStatus = useCallback(
-    async (item: InventoryItem) => {
-      const nextStatus = STATUS_CYCLE[item.status];
-      // Optimistic update
-      setItems((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, status: nextStatus } : i)),
-      );
+  const handleCycleStatus = useCallback(async (item: InventoryItem) => {
+    const nextStatus = STATUS_CYCLE[item.status];
+    // Optimistic update
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: nextStatus } : i)));
 
-      try {
-        const token = await fetchAccessToken();
-        if (!token) throw new Error("Not authenticated");
-        const updated: InventoryItemUpdateResponse = await updateInventoryItem(
-          item.id,
-          { status: nextStatus },
-          token,
-        );
-        setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)));
-      } catch {
-        // Revert on error
-        setItems((prev) =>
-          prev.map((i) => (i.id === item.id ? { ...i, status: item.status } : i)),
-        );
-        setError("Failed to update status");
-      }
-    },
-    [],
-  );
+    try {
+      const token = await fetchAccessToken();
+      if (!token) throw new Error("Not authenticated");
+      const updated: InventoryItemUpdateResponse = await updateInventoryItem(
+        item.id,
+        { status: nextStatus },
+        token
+      );
+      setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)));
+    } catch {
+      // Revert on error
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: item.status } : i)));
+      setError("Failed to update status");
+    }
+  }, []);
 
   // ── Group picker ───────────────────────────────────────────────────────────
 
@@ -182,9 +175,7 @@ export default function InventoryPage() {
 
   const LOCATION_ORDER: Location[] = ["fridge", "freezer", "pantry", "other"];
 
-  const scanHref = selectedGroupId
-    ? `/inventory/scan?group=${selectedGroupId}`
-    : "/inventory/scan";
+  const scanHref = selectedGroupId ? `/inventory/scan?group=${selectedGroupId}` : "/inventory/scan";
 
   return (
     <main className="mx-auto max-w-md p-4 pb-24">
@@ -201,14 +192,11 @@ export default function InventoryPage() {
       {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
 
       {useSoonItems.length > 0 && (
-        <section
-          role="status"
-          className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3"
-        >
+        <section role="status" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
           <h2 className="mb-2 text-sm font-semibold text-amber-800">Use soon</h2>
           <ul className="space-y-1">
             {useSoonItems.map((item) => (
-              <li key={item.id} className={item.status === "out" ? "opacity-40 line-through" : ""}>
+              <li key={item.id} className={item.status === "out" ? "line-through opacity-40" : ""}>
                 <button
                   aria-label={`Cycle status for ${item.name}`}
                   className="flex w-full items-center justify-between rounded px-2 py-1 text-left text-sm hover:bg-amber-100"
@@ -239,7 +227,7 @@ export default function InventoryPage() {
               {[...activeItems, ...outItems].map((item) => (
                 <li
                   key={item.id}
-                  className={item.status === "out" ? "opacity-40 line-through" : ""}
+                  className={item.status === "out" ? "line-through opacity-40" : ""}
                 >
                   <button
                     aria-label={`Cycle status for ${item.name}`}

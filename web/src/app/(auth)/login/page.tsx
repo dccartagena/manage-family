@@ -75,12 +75,18 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         {error && (
-          <p role="alert" className="rounded border border-destructive p-2 text-sm text-destructive">
+          <p
+            role="alert"
+            className="rounded border border-destructive p-2 text-sm text-destructive"
+          >
             {error}
           </p>
         )}
         {info && (
-          <p role="status" className="rounded border border-border p-2 text-sm text-muted-foreground">
+          <p
+            role="status"
+            className="rounded border border-border p-2 text-sm text-muted-foreground"
+          >
             {info}
           </p>
         )}

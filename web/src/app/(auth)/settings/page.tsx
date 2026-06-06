@@ -290,53 +290,66 @@ export default function SettingsPage() {
 
   if (view === "menu") {
     return (
-      <main className="mx-auto max-w-md p-6 pb-24 space-y-6">
+      <main className="mx-auto max-w-md space-y-6 p-6 pb-24">
         <h1 className="text-xl font-semibold">Settings</h1>
 
         <nav aria-label="Settings sections">
-          <ul className="divide-y divide-border rounded-lg border border-border overflow-hidden">
+          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
             <li>
               <button
                 type="button"
                 onClick={() => setView("user")}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/50 transition-colors"
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
               >
                 <User className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">User</p>
-                  <p className="text-xs text-muted-foreground truncate">{email || "Profile & password"}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {email || "Profile & password"}
+                  </p>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <ChevronRight
+                  className="h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
               </button>
             </li>
             <li>
               <button
                 type="button"
                 onClick={() => setView("households")}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/50 transition-colors"
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
               >
                 <Home className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">Households</p>
                   <p className="text-xs text-muted-foreground">
-                    {groups.length === 0 ? "No households yet" : `${groups.length} household${groups.length !== 1 ? "s" : ""}`}
+                    {groups.length === 0
+                      ? "No households yet"
+                      : `${groups.length} household${groups.length !== 1 ? "s" : ""}`}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <ChevronRight
+                  className="h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
               </button>
             </li>
             <li>
               <button
                 type="button"
                 onClick={() => setView("system")}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/50 transition-colors"
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
               >
                 <Monitor className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">System</p>
                   <p className="text-xs text-muted-foreground">Display & calendar feed</p>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <ChevronRight
+                  className="h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
               </button>
             </li>
           </ul>
@@ -361,7 +374,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="mx-auto max-w-md p-6 pb-24 space-y-6">
+    <main className="mx-auto max-w-md space-y-6 p-6 pb-24">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -480,7 +493,7 @@ export default function SettingsPage() {
           ) : (
             <ul className="space-y-2">
               {groups.map((group) => (
-                <li key={group.id} className="rounded-md border border-border px-3 py-2 space-y-2">
+                <li key={group.id} className="space-y-2 rounded-md border border-border px-3 py-2">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium">{group.name}</p>
@@ -532,7 +545,7 @@ export default function SettingsPage() {
                         type="text"
                         readOnly
                         value={inviteUrls[group.id]}
-                        className="flex-1 truncate rounded border border-input bg-muted px-2 py-1 text-xs font-mono"
+                        className="flex-1 truncate rounded border border-input bg-muted px-2 py-1 font-mono text-xs"
                         aria-label="Invite link"
                       />
                       <button
@@ -592,7 +605,9 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">High contrast</p>
-                <p className="text-xs text-muted-foreground">Increase text and background contrast</p>
+                <p className="text-xs text-muted-foreground">
+                  Increase text and background contrast
+                </p>
               </div>
               <button
                 type="button"
@@ -652,7 +667,7 @@ export default function SettingsPage() {
                     type="text"
                     readOnly
                     value={feedUrl}
-                    className="flex-1 truncate rounded-md border border-input bg-muted px-3 py-2 text-xs font-mono"
+                    className="flex-1 truncate rounded-md border border-input bg-muted px-3 py-2 font-mono text-xs"
                     aria-label="iCal feed URL"
                   />
                   <button
@@ -666,12 +681,12 @@ export default function SettingsPage() {
 
                 <div className="space-y-1 text-xs text-muted-foreground">
                   <p>
-                    <span className="font-medium">Google Calendar:</span> Settings → Other calendars →
-                    From URL → Paste URL
+                    <span className="font-medium">Google Calendar:</span> Settings → Other calendars
+                    → From URL → Paste URL
                   </p>
                   <p>
-                    <span className="font-medium">Outlook:</span> Add calendar → Subscribe from web →
-                    Paste URL
+                    <span className="font-medium">Outlook:</span> Add calendar → Subscribe from web
+                    → Paste URL
                   </p>
                 </div>
 
