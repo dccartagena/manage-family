@@ -40,9 +40,14 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   );
 
   // Refresh session — must call getUser() not getSession() per @supabase/ssr docs
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Fail closed: any error treated as unauthenticated
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // network error or misconfigured env vars — treat as unauthenticated
+  }
 
   const { pathname } = request.nextUrl;
 
