@@ -18,7 +18,7 @@ def _get_url() -> str:
     url = os.environ.get("POSTGRES_URL")
     if not url:
         raise RuntimeError("POSTGRES_URL env var is not set")
-    return url
+    return url.replace("postgres://", "postgresql://", 1)
 
 
 def run_migrations_offline() -> None:

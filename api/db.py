@@ -12,6 +12,7 @@ def _get_engine():
         url = os.environ.get("POSTGRES_URL")
         if not url:
             raise RuntimeError("POSTGRES_URL env var is not set")
+        url = url.replace("postgres://", "postgresql://", 1)
         _engine = create_engine(
             url,
             pool_pre_ping=True,
