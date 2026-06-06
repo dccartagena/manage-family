@@ -3,6 +3,7 @@ from logging.config import fileConfig
 
 import api.models  # noqa: F401 — registers all SQLModel table models in metadata
 from alembic import context
+from api.db import _clean_db_url
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
@@ -18,7 +19,7 @@ def _get_url() -> str:
     url = os.environ.get("POSTGRES_URL")
     if not url:
         raise RuntimeError("POSTGRES_URL env var is not set")
-    return url.replace("postgres://", "postgresql://", 1)
+    return _clean_db_url(url)
 
 
 def run_migrations_offline() -> None:
