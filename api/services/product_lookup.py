@@ -3,10 +3,9 @@ from __future__ import annotations
 import os
 
 import httpx
+from api.models import ProductCache
 from fastapi import HTTPException, status
 from sqlmodel import Session
-
-from api.models import ProductCache
 
 _OFF_BASE_URL = os.environ.get("OPEN_FOOD_FACTS_URL", "https://world.openfoodfacts.org")
 _OFF_TIMEOUT = 10.0

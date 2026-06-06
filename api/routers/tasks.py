@@ -2,13 +2,12 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlmodel import Session, select
-
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
 from api.models import Membership, Task
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from sqlmodel import Session, select
 
 router = APIRouter()
 
@@ -101,10 +100,11 @@ def list_tasks(
 
     query = select(Task).where(Task.group_id == group_id)
 
-    if done is None:
-        query = query.where(Task.done == False)  # noqa: E712
-    else:
-        query = query.where(Task.done == done)  # noqa: E712
+    query = (
+        query.where(Task.done == False)  # noqa: E712
+        if done is None
+        else query.where(Task.done == done)  # noqa: E712
+    )
 
     if assignee_id is not None:
         query = query.where(Task.assignee_id == assignee_id)

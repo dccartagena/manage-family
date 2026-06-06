@@ -108,10 +108,10 @@ def upgrade() -> None:
     # Indexes per data-model.md §Key indexes
     op.execute("CREATE INDEX IF NOT EXISTS idx_memberships_person_id ON memberships(person_id)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_memberships_group_id ON memberships(group_id)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_tasks_group_done_due ON tasks(group_id, done, due_at)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_tasks_group_done_due ON tasks(group_id, done, due_at)")  # noqa: E501
     op.execute("CREATE INDEX IF NOT EXISTS idx_shopping_items_group_id ON shopping_items(group_id)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_events_group_starts ON events(group_id, starts_at)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_reminders_person_delivered_fire ON reminders(person_id, delivered, fire_at)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_reminders_person_delivered_fire ON reminders(person_id, delivered, fire_at)")  # noqa: E501
     op.execute("CREATE INDEX IF NOT EXISTS idx_invites_token ON invites(token)")
 
     # updated_at auto-trigger for tasks and shopping_items
@@ -155,7 +155,7 @@ def upgrade() -> None:
     """)
 
     # Enable Row Level Security on all tables
-    for table in ("persons", "groups", "memberships", "invites", "tasks", "shopping_items", "events", "reminders"):
+    for table in ("persons", "groups", "memberships", "invites", "tasks", "shopping_items", "events", "reminders"):  # noqa: E501
         op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
 
     # RLS policies per data-model.md §RLS Policy Summary
@@ -294,12 +294,12 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    for table in ("persons", "groups", "memberships", "invites", "tasks", "shopping_items", "events", "reminders"):
+    for table in ("persons", "groups", "memberships", "invites", "tasks", "shopping_items", "events", "reminders"):  # noqa: E501
         op.execute(f"DROP POLICY IF EXISTS {table}_select_own ON {table}")
         op.execute(f"ALTER TABLE {table} DISABLE ROW LEVEL SECURITY")
 
     op.execute("DROP FUNCTION IF EXISTS person_reachable_groups(UUID)")
     op.execute("DROP FUNCTION IF EXISTS set_updated_at()")
 
-    for table in ("reminders", "events", "shopping_items", "tasks", "invites", "memberships", "groups", "persons"):
+    for table in ("reminders", "events", "shopping_items", "tasks", "invites", "memberships", "groups", "persons"):  # noqa: E501
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE")

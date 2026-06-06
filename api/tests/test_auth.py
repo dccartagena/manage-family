@@ -1,11 +1,9 @@
 """Failing tests for auth layer — must fail before api/auth.py is implemented."""
-import uuid
 
 import pytest
+from api.main import app
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-
-from api.main import app
 
 client = TestClient(app)
 

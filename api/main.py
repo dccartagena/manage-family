@@ -4,10 +4,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-from api.routers import dashboard, events, groups, ical, inventory, invites, jobs, person, reminders, shopping, tasks
+from api.routers import (  # noqa: E402
+    dashboard,
+    events,
+    groups,
+    ical,
+    inventory,
+    invites,
+    jobs,
+    person,
+    reminders,
+    shopping,
+    tasks,
+)
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
 app = FastAPI(
     title="Household Manager API",

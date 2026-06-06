@@ -1,16 +1,15 @@
 import os
 import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
+from api.auth import PersonAuth, get_person_auth
+from api.db import get_session
+from api.models import Group, Invite, Membership
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session, select
-
-from api.auth import get_person_auth, PersonAuth
-from api.db import get_session
-from api.models import Group, Invite, Membership
 
 router = APIRouter()
 
@@ -43,16 +42,14 @@ def _invite_url(token: str) -> str:
 
 
 def _is_valid_invite(invite: Invite) -> bool:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if invite.expires_at is not None:
         exp = invite.expires_at
         if exp.tzinfo is None:
-            exp = exp.replace(tzinfo=timezone.utc)
+            exp = exp.replace(tzinfo=UTC)
         if exp <= now:
             return False
-    if invite.max_uses is not None and invite.uses >= invite.max_uses:
-        return False
-    return True
+    return not (invite.max_uses is not None and invite.uses >= invite.max_uses)
 
 
 @router.post(

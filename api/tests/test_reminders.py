@@ -1,11 +1,9 @@
-"""Failing tests for reminders — must fail before api/routers/reminders.py and jobs.py are implemented."""
-import uuid
-from datetime import datetime, timezone, timedelta
+"""Failing tests for reminders — must fail before api/routers/reminders.py and jobs.py are implemented."""  # noqa: E501
+from datetime import UTC, datetime, timedelta
 
 import pytest
-from fastapi.testclient import TestClient
-
 from api.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
@@ -150,7 +148,7 @@ def test_jobs_tick_delivers_due_reminders(make_auth_token) -> None:
     client.post("/api/v1/person/sync", headers=headers)
 
     # Create a past-due reminder (fire_at in the past)
-    past_time = (datetime.now(tz=timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+    past_time = (datetime.now(tz=UTC) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
     create_resp = client.post(
         "/api/v1/reminders",
         headers=headers,
@@ -179,7 +177,7 @@ def test_jobs_tick_does_not_deliver_future_reminders(make_auth_token) -> None:
     headers = {"Authorization": f"Bearer {token}"}
     client.post("/api/v1/person/sync", headers=headers)
 
-    future_time = (datetime.now(tz=timezone.utc) + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+    future_time = (datetime.now(tz=UTC) + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
     create_resp = client.post(
         "/api/v1/reminders",
         headers=headers,

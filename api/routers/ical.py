@@ -1,18 +1,18 @@
 import os
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import recurring_ical_events
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import Response
-from icalendar import Alarm, Calendar, Event as ICalEvent, vRecur
-from pydantic import BaseModel
-from sqlmodel import Session, select
-
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
 from api.models import Event, Group, Membership, Person, Reminder
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
+from icalendar import Alarm, Calendar, vRecur
+from icalendar import Event as ICalEvent
+from pydantic import BaseModel
+from sqlmodel import Session, select
 
 router = APIRouter()
 
@@ -29,7 +29,7 @@ def _build_ical_calendar(events: list[Event], reminders: list[Reminder]) -> byte
     cal.add("VERSION", "2.0")
     cal.add("CALSCALE", "GREGORIAN")
 
-    window_start = datetime.now(tz=timezone.utc)
+    window_start = datetime.now(tz=UTC)
     window_end = window_start + timedelta(days=_ICAL_WINDOW_DAYS)
 
     for event in events:
@@ -39,7 +39,7 @@ def _build_ical_calendar(events: list[Event], reminders: list[Reminder]) -> byte
             vevent.add("SUMMARY", event.title)
             starts = event.starts_at
             if starts.tzinfo is None:
-                starts = starts.replace(tzinfo=timezone.utc)
+                starts = starts.replace(tzinfo=UTC)
             vevent.add("DTSTART", starts)
             vevent.add("UID", str(event.id))
             vevent.add("RRULE", vRecur.from_ical(event.rrule))
@@ -55,7 +55,7 @@ def _build_ical_calendar(events: list[Event], reminders: list[Reminder]) -> byte
             vevent.add("SUMMARY", event.title)
             starts = event.starts_at
             if starts.tzinfo is None:
-                starts = starts.replace(tzinfo=timezone.utc)
+                starts = starts.replace(tzinfo=UTC)
             vevent.add("DTSTART", starts)
             vevent.add("UID", str(event.id))
             cal.add_component(vevent)
@@ -63,7 +63,7 @@ def _build_ical_calendar(events: list[Event], reminders: list[Reminder]) -> byte
     for reminder in reminders:
         fire_at = reminder.fire_at
         if fire_at.tzinfo is None:
-            fire_at = fire_at.replace(tzinfo=timezone.utc)
+            fire_at = fire_at.replace(tzinfo=UTC)
 
         vevent = ICalEvent()
         vevent.add("SUMMARY", reminder.title)
@@ -107,7 +107,7 @@ def _fetch_reminders_for_person(
 ) -> list[Reminder]:
     # Include delivered reminders and undelivered future reminders so the
     # calendar app shows both past alerts and upcoming ones.
-    now = datetime.now(tz=timezone.utc).replace(tzinfo=None)
+    now = datetime.now(tz=UTC).replace(tzinfo=None)
     return session.exec(
         select(Reminder).where(
             Reminder.person_id == person_id,

@@ -2,13 +2,12 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlmodel import Session, select
-
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
 from api.models import Event, Membership
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from sqlmodel import Session, select
 
 router = APIRouter()
 

@@ -20,7 +20,8 @@ def upgrade() -> None:
             name TEXT NOT NULL,
             category TEXT NOT NULL,
             is_staple BOOLEAN NOT NULL DEFAULT FALSE,
-            usual_location TEXT NOT NULL CHECK (usual_location IN ('fridge','freezer','pantry','other')),
+            usual_location TEXT NOT NULL
+                CHECK (usual_location IN ('fridge','freezer','pantry','other')),
             expiry_days_default INTEGER CHECK (expiry_days_default > 0)
         )
     """)

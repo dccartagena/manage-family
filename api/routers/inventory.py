@@ -2,14 +2,13 @@ import uuid
 from datetime import date, datetime
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, field_validator
-from sqlmodel import Session, select
-
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
 from api.models import CanonicalProduct, InventoryItem, Membership, ProductCache
 from api.services.product_lookup import ProductLookupService
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, field_validator
+from sqlmodel import Session, select
 
 router = APIRouter(tags=["inventory"])
 
@@ -87,8 +86,8 @@ class InventoryItemCreate(BaseModel):
             return None
         try:
             datetime.strptime(v, "%d-%m-%Y")
-        except ValueError:
-            raise ValueError("expiry_date must be in DD-MM-YYYY format")
+        except ValueError as err:
+            raise ValueError("expiry_date must be in DD-MM-YYYY format") from err
         return v
 
 
@@ -105,8 +104,8 @@ class InventoryItemUpdate(BaseModel):
             return None
         try:
             datetime.strptime(v, "%d-%m-%Y")
-        except ValueError:
-            raise ValueError("expiry_date must be in DD-MM-YYYY format")
+        except ValueError as err:
+            raise ValueError("expiry_date must be in DD-MM-YYYY format") from err
         return v
 
 

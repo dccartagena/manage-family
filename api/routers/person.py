@@ -1,13 +1,12 @@
 import uuid
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlmodel import Session, select
-
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
 from api.models import Person
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from sqlmodel import Session, select
 
 router = APIRouter()
 
@@ -152,7 +151,7 @@ def update_prefs(
         if body.notification_batching not in _VALID_NOTIFICATION_BATCHING:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"notification_batching must be one of {sorted(_VALID_NOTIFICATION_BATCHING)}",
+                detail=f"notification_batching must be one of {sorted(_VALID_NOTIFICATION_BATCHING)}",  # noqa: E501
             )
         updated["notification_batching"] = body.notification_batching
 

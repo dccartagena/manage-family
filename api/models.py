@@ -1,9 +1,8 @@
 import uuid
 from datetime import date, datetime
-from typing import Optional
 
+from sqlalchemy import JSON, CheckConstraint, text
 from sqlmodel import Column, Field, SQLModel
-from sqlalchemy import CheckConstraint, JSON, text
 
 
 class Person(SQLModel, table=True):
@@ -41,7 +40,7 @@ class Group(SQLModel, table=True):
         primary_key=True,
         sa_column_kwargs={"server_default": text("gen_random_uuid()")},
     )
-    parent_group_id: Optional[uuid.UUID] = Field(
+    parent_group_id: uuid.UUID | None = Field(
         default=None,
         foreign_key="groups.id",
         nullable=True,
@@ -94,8 +93,8 @@ class Invite(SQLModel, table=True):
         unique=True,
         sa_column_kwargs={"server_default": text("encode(gen_random_bytes(32), 'hex')")},
     )
-    expires_at: Optional[datetime] = Field(default=None, nullable=True)
-    max_uses: Optional[int] = Field(default=None, nullable=True, gt=0)
+    expires_at: datetime | None = Field(default=None, nullable=True)
+    max_uses: int | None = Field(default=None, nullable=True, gt=0)
     uses: int = Field(
         default=0,
         nullable=False,
@@ -117,19 +116,19 @@ class Task(SQLModel, table=True):
         sa_column_kwargs={"server_default": text("gen_random_uuid()")},
     )
     group_id: uuid.UUID = Field(foreign_key="groups.id", nullable=False)
-    assignee_id: Optional[uuid.UUID] = Field(
+    assignee_id: uuid.UUID | None = Field(
         default=None,
         foreign_key="persons.id",
         nullable=True,
     )
     title: str = Field(nullable=False)
-    rrule: Optional[str] = Field(default=None, nullable=True)
+    rrule: str | None = Field(default=None, nullable=True)
     done: bool = Field(
         default=False,
         nullable=False,
         sa_column_kwargs={"server_default": text("FALSE")},
     )
-    due_at: Optional[datetime] = Field(default=None, nullable=True)
+    due_at: datetime | None = Field(default=None, nullable=True)
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         nullable=False,
@@ -157,7 +156,7 @@ class ShoppingItem(SQLModel, table=True):
         nullable=False,
         sa_column_kwargs={"server_default": text("FALSE")},
     )
-    canonical_product_id: Optional[uuid.UUID] = Field(
+    canonical_product_id: uuid.UUID | None = Field(
         default=None,
         foreign_key="canonical_products.id",
         nullable=True,
@@ -198,7 +197,7 @@ class CanonicalProduct(SQLModel, table=True):
         sa_column_kwargs={"server_default": text("FALSE")},
     )
     usual_location: str = Field(nullable=False)
-    expiry_days_default: Optional[int] = Field(default=None, nullable=True)
+    expiry_days_default: int | None = Field(default=None, nullable=True)
 
 
 class ProductCache(SQLModel, table=True):
@@ -211,15 +210,15 @@ class ProductCache(SQLModel, table=True):
     )
 
     barcode: str = Field(primary_key=True)
-    canonical_product_id: Optional[uuid.UUID] = Field(
+    canonical_product_id: uuid.UUID | None = Field(
         default=None,
         foreign_key="canonical_products.id",
         nullable=True,
     )
     source: str = Field(nullable=False)
     name: str = Field(nullable=False)
-    brand: Optional[str] = Field(default=None, nullable=True)
-    category: Optional[str] = Field(default=None, nullable=True)
+    brand: str | None = Field(default=None, nullable=True)
+    category: str | None = Field(default=None, nullable=True)
     raw_data: dict = Field(
         default_factory=dict,
         sa_column=Column(JSON, nullable=False, server_default=text("'{}'")),
@@ -258,7 +257,7 @@ class InventoryItem(SQLModel, table=True):
         foreign_key="canonical_products.id",
         nullable=False,
     )
-    barcode: Optional[str] = Field(
+    barcode: str | None = Field(
         default=None,
         foreign_key="product_cache.barcode",
         nullable=True,
@@ -270,15 +269,15 @@ class InventoryItem(SQLModel, table=True):
         nullable=False,
         sa_column_kwargs={"server_default": text("'ok'")},
     )
-    expiry_date: Optional[date] = Field(default=None, nullable=True)
+    expiry_date: date | None = Field(default=None, nullable=True)
     added_by: uuid.UUID = Field(foreign_key="persons.id", nullable=False)
     added_at: datetime = Field(
         default_factory=datetime.utcnow,
         nullable=False,
         sa_column_kwargs={"server_default": text("now()")},
     )
-    removed_at: Optional[datetime] = Field(default=None, nullable=True)
-    removed_reason: Optional[str] = Field(default=None, nullable=True)
+    removed_at: datetime | None = Field(default=None, nullable=True)
+    removed_reason: str | None = Field(default=None, nullable=True)
 
 
 class Event(SQLModel, table=True):
@@ -292,7 +291,7 @@ class Event(SQLModel, table=True):
     group_id: uuid.UUID = Field(foreign_key="groups.id", nullable=False)
     title: str = Field(nullable=False)
     starts_at: datetime = Field(nullable=False)
-    rrule: Optional[str] = Field(default=None, nullable=True)
+    rrule: str | None = Field(default=None, nullable=True)
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         nullable=False,

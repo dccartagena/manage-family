@@ -38,6 +38,7 @@ async function fetchDashboard(): Promise<DashboardData> {
   const supabase = createAuthBrowserClient();
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
+  if (!token) throw new Error("Not authenticated");
   const response = await fetch(`${API_URL}/api/v1/dashboard`, {
     headers: { Authorization: `Bearer ${token}` },
   });

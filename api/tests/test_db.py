@@ -1,4 +1,5 @@
 """Tests for db layer — requires DATABASE_POOL_URL for the live-connection test."""
+import contextlib
 import os
 
 import pytest
@@ -18,7 +19,5 @@ def test_get_session_yields_live_session() -> None:
     assert isinstance(session, Session)
     result = session.exec(text("SELECT 1")).first()
     assert result is not None
-    try:
+    with contextlib.suppress(StopIteration):
         next(gen)
-    except StopIteration:
-        pass

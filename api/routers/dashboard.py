@@ -1,14 +1,13 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
-
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-from sqlmodel import Session, select
 
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
 from api.models import Event, Group, Membership, ShoppingItem, Task
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
+from sqlmodel import Session, select
 
 router = APIRouter()
 
@@ -46,7 +45,7 @@ def get_dashboard(
     auth: Annotated[PersonAuth, Depends(get_person_auth)],
     session: Annotated[Session, Depends(get_session)],
 ) -> DashboardResponse:
-    now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    now_naive = datetime.now(UTC).replace(tzinfo=None)
     today_start = now_naive.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
     seven_days_end = today_end + timedelta(days=7)

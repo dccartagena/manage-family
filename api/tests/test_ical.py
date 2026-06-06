@@ -1,11 +1,10 @@
 """Failing tests for iCal feed — must fail before api/routers/ical.py is implemented."""
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
-from fastapi.testclient import TestClient
-
 from api.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
@@ -146,7 +145,7 @@ def test_ical_includes_delivered_reminder_as_vevent(make_auth_token) -> None:
     sync_resp = client.post("/api/v1/person/sync", headers=headers)
     ical_secret = sync_resp.json()["ical_secret"]
 
-    past_time = (datetime.now(tz=timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+    past_time = (datetime.now(tz=UTC) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
     client.post(
         "/api/v1/reminders",
         headers=headers,
@@ -174,7 +173,7 @@ def test_ical_includes_future_undelivered_reminder_as_vevent(make_auth_token) ->
     sync_resp = client.post("/api/v1/person/sync", headers=headers)
     ical_secret = sync_resp.json()["ical_secret"]
 
-    future_time = (datetime.now(tz=timezone.utc) + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+    future_time = (datetime.now(tz=UTC) + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
     client.post(
         "/api/v1/reminders",
         headers=headers,

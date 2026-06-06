@@ -1,10 +1,8 @@
 """Failing tests for shopping router — must fail before api/routers/shopping.py is implemented."""
 import uuid
 
-import pytest
-from fastapi.testclient import TestClient
-
 from api.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 

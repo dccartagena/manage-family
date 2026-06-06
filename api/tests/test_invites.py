@@ -1,11 +1,9 @@
 """Failing tests for invites router — must fail before api/routers/invites.py is implemented."""
 import uuid
-from datetime import datetime, timedelta, timezone
-
-import pytest
-from fastapi.testclient import TestClient
+from datetime import UTC, datetime, timedelta
 
 from api.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
@@ -138,7 +136,7 @@ def test_accept_expired_invite_returns_410(make_auth_token) -> None:
     )
     group_id = resp.json()["id"]
 
-    past = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    past = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
     invite_resp = client.post(
         f"/api/v1/groups/{group_id}/invites",
         headers=headers_owner,

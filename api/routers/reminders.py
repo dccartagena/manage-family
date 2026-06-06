@@ -1,15 +1,14 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlmodel import Session, select
 
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
 from api.models import Reminder
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from sqlmodel import Session, select
 
 router = APIRouter()
 
@@ -57,14 +56,14 @@ def create_reminder(
 ) -> ReminderResponse:
     try:
         tz = ZoneInfo(body.timezone)
-    except ZoneInfoNotFoundError:
+    except ZoneInfoNotFoundError as err:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Unknown timezone: {body.timezone}",
-        )
+        ) from err
 
     local_dt = body.fire_at_local.replace(tzinfo=tz)
-    fire_at_utc = local_dt.astimezone(timezone.utc).replace(tzinfo=None)
+    fire_at_utc = local_dt.astimezone(UTC).replace(tzinfo=None)
 
     reminder = Reminder(
         person_id=auth.person_id,

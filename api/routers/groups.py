@@ -1,13 +1,12 @@
 import uuid
 from typing import Annotated
 
+from api.auth import PersonAuth, get_person_auth
+from api.db import get_session
+from api.models import Group, Membership, Task
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session, select
-
-from api.auth import get_person_auth, PersonAuth
-from api.db import get_session
-from api.models import Group, Membership, Task
 
 router = APIRouter()
 
@@ -169,8 +168,8 @@ def leave_group(
 
 
 def _delete_group_cascade(session: Session, group_id: uuid.UUID) -> None:
-    """Delete group and all associated data (tasks, shopping items, events, invites, memberships)."""
-    from api.models import Event, Invite, Membership, Reminder, ShoppingItem, Task
+    """Delete group and all associated data (tasks, shopping items, events, invites, memberships)."""  # noqa: E501
+    from api.models import Event, Invite, Membership, ShoppingItem, Task
 
     for task in session.exec(select(Task).where(Task.group_id == group_id)).all():
         session.delete(task)

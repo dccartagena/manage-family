@@ -1,13 +1,12 @@
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
-
-from fastapi import APIRouter, Depends, Header, HTTPException, status
-from pydantic import BaseModel
-from sqlmodel import Session, select
 
 from api.db import get_session
 from api.models import Reminder
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from pydantic import BaseModel
+from sqlmodel import Session, select
 
 router = APIRouter()
 
@@ -29,7 +28,7 @@ def tick(
             detail="Invalid or missing scheduler secret",
         )
 
-    now = datetime.now(tz=timezone.utc).replace(tzinfo=None)
+    now = datetime.now(tz=UTC).replace(tzinfo=None)
     due_reminders = session.exec(
         select(Reminder).where(
             Reminder.fire_at <= now,
@@ -45,5 +44,5 @@ def tick(
 
     return TickResponse(
         reminders_delivered=len(due_reminders),
-        tick_at=datetime.now(tz=timezone.utc).isoformat(),
+        tick_at=datetime.now(tz=UTC).isoformat(),
     )
