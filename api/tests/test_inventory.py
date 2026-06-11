@@ -48,16 +48,23 @@ def _off_miss_mock() -> MagicMock:
     return mock
 
 
-def _create_canonical_product(headers: dict, group_id: str) -> str:
+def _create_canonical_product(
+    headers: dict,
+    group_id: str,
+    *,
+    name: str = "Test Yogurt",
+    is_staple: bool = False,
+    usual_location: str = "fridge",
+) -> str:
     """Create a canonical product; return its id."""
     resp = client.post(
         f"/api/v1/groups/{group_id}/canonical-products",
         headers=headers,
         json={
-            "name": "Test Yogurt",
+            "name": name,
             "category": "fresh_dairy",
-            "is_staple": False,
-            "usual_location": "fridge",
+            "is_staple": is_staple,
+            "usual_location": usual_location,
         },
     )
     assert resp.status_code == 201
@@ -623,3 +630,266 @@ def test_patch_inventory_invalid_status_422(make_auth_token) -> None:
         json={"status": "invalid_status"},
     )
     assert resp.status_code == 422
+
+
+# ────────────────────────────────────────────────────────────────
+# T033: staple auto-add side-effect in PATCH /inventory/{item_id}
+# ────────────────────────────────────────────────────────────────
+
+
+def test_patch_staple_low_creates_shopping_item(make_auth_token) -> None:
+    """(a) staple item status→low creates shopping item and reports it."""
+    _, group_id, headers = _make_user_and_group(
+        "staple_low@example.com", "Staple Group 1", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id, name="Milk", is_staple=True)
+    item_id = _create_inventory_item(headers, group_id, cp_id)
+
+    resp = client.patch(f"/api/v1/inventory/{item_id}", headers=headers, json={"status": "low"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["shopping_item_created"] is True
+    assert data["shopping_item_name"] == "Milk"
+
+    shopping = client.get(f"/api/v1/groups/{group_id}/shopping", headers=headers).json()
+    matches = [s for s in shopping if s["name"] == "Milk"]
+    assert len(matches) == 1
+    assert matches[0]["checked"] is False
+    assert matches[0]["canonical_product_id"] == cp_id
+
+
+def test_patch_staple_low_no_duplicate_when_already_listed(make_auth_token) -> None:
+    """(b) staple already on list (unchecked): no duplicate row created."""
+    _, group_id, headers = _make_user_and_group(
+        "staple_dup@example.com", "Staple Group 2", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id, name="Milk", is_staple=True)
+    item_id = _create_inventory_item(headers, group_id, cp_id)
+
+    # First low transition adds the shopping item
+    client.patch(f"/api/v1/inventory/{item_id}", headers=headers, json={"status": "low"})
+    # Cycle back to ok, then low again — the unchecked item is still on the list
+    client.patch(f"/api/v1/inventory/{item_id}", headers=headers, json={"status": "ok"})
+    resp = client.patch(f"/api/v1/inventory/{item_id}", headers=headers, json={"status": "low"})
+    assert resp.status_code == 200
+    assert resp.json()["shopping_item_created"] is False
+
+    shopping = client.get(f"/api/v1/groups/{group_id}/shopping", headers=headers).json()
+    assert len([s for s in shopping if s["name"] == "Milk"]) == 1
+
+
+def test_patch_non_staple_low_no_shopping_item(make_auth_token) -> None:
+    """(c) non-staple item status→low: no shopping item created."""
+    _, group_id, headers = _make_user_and_group(
+        "staple_non@example.com", "Staple Group 3", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id, name="Treats", is_staple=False)
+    item_id = _create_inventory_item(headers, group_id, cp_id)
+
+    resp = client.patch(f"/api/v1/inventory/{item_id}", headers=headers, json={"status": "low"})
+    assert resp.status_code == 200
+    assert resp.json()["shopping_item_created"] is False
+
+    shopping = client.get(f"/api/v1/groups/{group_id}/shopping", headers=headers).json()
+    assert shopping == []
+
+
+# ────────────────────────────────────────────────────────────────
+# T037: DELETE /inventory/{item_id}
+# ────────────────────────────────────────────────────────────────
+
+
+def test_delete_inventory_item_with_reason(db_session, make_auth_token) -> None:
+    """(a) valid removal sets removed_at + removed_reason; item gone from GET list."""
+    _, group_id, headers = _make_user_and_group(
+        "del_inv1@example.com", "Del Inv Group 1", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id)
+    item_id = _create_inventory_item(headers, group_id, cp_id)
+
+    resp = client.request(
+        "DELETE",
+        f"/api/v1/inventory/{item_id}",
+        headers=headers,
+        json={"removed_reason": "thrown"},
+    )
+    assert resp.status_code == 204
+
+    row = db_session.get(InventoryItem, uuid.UUID(item_id))
+    assert row is not None
+    assert row.removed_at is not None
+    assert row.removed_reason == "thrown"
+
+    listing = client.get(f"/api/v1/groups/{group_id}/inventory", headers=headers).json()
+    assert all(i["id"] != item_id for i in listing)
+
+
+def test_delete_inventory_item_missing_reason_422(make_auth_token) -> None:
+    """(b) missing removed_reason → 422."""
+    _, group_id, headers = _make_user_and_group(
+        "del_inv2@example.com", "Del Inv Group 2", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id)
+    item_id = _create_inventory_item(headers, group_id, cp_id)
+
+    resp = client.request("DELETE", f"/api/v1/inventory/{item_id}", headers=headers, json={})
+    assert resp.status_code == 422
+
+
+def test_delete_inventory_item_invalid_reason_422(make_auth_token) -> None:
+    """(c) invalid reason value → 422."""
+    _, group_id, headers = _make_user_and_group(
+        "del_inv3@example.com", "Del Inv Group 3", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id)
+    item_id = _create_inventory_item(headers, group_id, cp_id)
+
+    resp = client.request(
+        "DELETE",
+        f"/api/v1/inventory/{item_id}",
+        headers=headers,
+        json={"removed_reason": "vanished"},
+    )
+    assert resp.status_code == 422
+
+
+def test_delete_inventory_item_non_member_403(make_auth_token) -> None:
+    """(d) non-member → 403."""
+    _, group_id, headers = _make_user_and_group(
+        "del_inv4@example.com", "Del Inv Group 4", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id)
+    item_id = _create_inventory_item(headers, group_id, cp_id)
+
+    other_token = make_auth_token(email="del_inv_outsider@example.com")
+    other_headers = {"Authorization": f"Bearer {other_token}"}
+    client.post("/api/v1/person/sync", headers=other_headers)
+
+    resp = client.request(
+        "DELETE",
+        f"/api/v1/inventory/{item_id}",
+        headers=other_headers,
+        json={"removed_reason": "used"},
+    )
+    assert resp.status_code == 403
+
+
+def test_delete_inventory_item_unknown_404(make_auth_token) -> None:
+    """(e) unknown id → 404."""
+    token = make_auth_token(email="del_inv5@example.com")
+    headers = {"Authorization": f"Bearer {token}"}
+    client.post("/api/v1/person/sync", headers=headers)
+
+    resp = client.request(
+        "DELETE",
+        f"/api/v1/inventory/{uuid.uuid4()}",
+        headers=headers,
+        json={"removed_reason": "used"},
+    )
+    assert resp.status_code == 404
+
+
+# ────────────────────────────────────────────────────────────────
+# T042: POST /groups/{group_id}/inventory/from-shopping
+# ────────────────────────────────────────────────────────────────
+
+
+def _add_shopping_item(
+    db_session,
+    group_id: str,
+    name: str,
+    canonical_product_id: str | None,
+) -> str:
+    from api.models import ShoppingItem
+
+    item = ShoppingItem(
+        group_id=uuid.UUID(group_id),
+        name=name,
+        checked=True,
+        canonical_product_id=uuid.UUID(canonical_product_id) if canonical_product_id else None,
+    )
+    db_session.add(item)
+    db_session.commit()
+    db_session.refresh(item)
+    return str(item.id)
+
+
+def test_from_shopping_creates_inventory_rows(db_session, make_auth_token) -> None:
+    """(a) items with canonical_product_id get inventory rows pre-filled from product."""
+    _, group_id, headers = _make_user_and_group(
+        "loop1@example.com", "Loop Group 1", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id, name="Milk", usual_location="fridge")
+    shopping_id = _add_shopping_item(db_session, group_id, "Milk", cp_id)
+
+    resp = client.post(
+        f"/api/v1/groups/{group_id}/inventory/from-shopping",
+        headers=headers,
+        json={"shopping_item_ids": [shopping_id]},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["skipped"] == []
+    assert len(data["created"]) == 1
+    created = data["created"][0]
+    assert created["canonical_product_id"] == cp_id
+    assert created["location"] == "fridge"
+    assert created["status"] == "ok"
+    assert created["name"] == "Milk"
+
+    listing = client.get(f"/api/v1/groups/{group_id}/inventory", headers=headers).json()
+    assert any(i["id"] == created["id"] for i in listing)
+
+
+def test_from_shopping_skips_items_without_canonical_product(db_session, make_auth_token) -> None:
+    """(b) items without canonical_product_id appear in skipped list."""
+    _, group_id, headers = _make_user_and_group(
+        "loop2@example.com", "Loop Group 2", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id, name="Milk")
+    linked_id = _add_shopping_item(db_session, group_id, "Milk", cp_id)
+    unlinked_id = _add_shopping_item(db_session, group_id, "Mystery", None)
+
+    resp = client.post(
+        f"/api/v1/groups/{group_id}/inventory/from-shopping",
+        headers=headers,
+        json={"shopping_item_ids": [linked_id, unlinked_id]},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["skipped"] == [unlinked_id]
+    assert len(data["created"]) == 1
+
+
+def test_from_shopping_empty_list_422(make_auth_token) -> None:
+    """(c) empty list → 422."""
+    _, group_id, headers = _make_user_and_group(
+        "loop3@example.com", "Loop Group 3", make_auth_token
+    )
+
+    resp = client.post(
+        f"/api/v1/groups/{group_id}/inventory/from-shopping",
+        headers=headers,
+        json={"shopping_item_ids": []},
+    )
+    assert resp.status_code == 422
+
+
+def test_from_shopping_non_member_403(db_session, make_auth_token) -> None:
+    """(d) non-member → 403."""
+    _, group_id, headers = _make_user_and_group(
+        "loop4@example.com", "Loop Group 4", make_auth_token
+    )
+    cp_id = _create_canonical_product(headers, group_id, name="Milk")
+    shopping_id = _add_shopping_item(db_session, group_id, "Milk", cp_id)
+
+    other_token = make_auth_token(email="loop_outsider@example.com")
+    other_headers = {"Authorization": f"Bearer {other_token}"}
+    client.post("/api/v1/person/sync", headers=other_headers)
+
+    resp = client.post(
+        f"/api/v1/groups/{group_id}/inventory/from-shopping",
+        headers=other_headers,
+        json={"shopping_item_ids": [shopping_id]},
+    )
+    assert resp.status_code == 403

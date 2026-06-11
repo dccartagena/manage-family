@@ -7,10 +7,12 @@ import type { InventoryItem } from "@/lib/inventory";
 
 const mockListInventory = vi.fn<() => Promise<InventoryItem[]>>();
 const mockUpdateInventoryItem = vi.fn();
+const mockDeleteInventoryItem = vi.fn();
 
 vi.mock("@/lib/inventory", () => ({
   listInventory: (...args: unknown[]) => mockListInventory(...(args as [])),
   updateInventoryItem: (...args: unknown[]) => mockUpdateInventoryItem(...args),
+  deleteInventoryItem: (...args: unknown[]) => mockDeleteInventoryItem(...args),
 }));
 
 vi.mock("@/lib/supabase", () => ({
@@ -152,6 +154,80 @@ describe("InventoryPage", () => {
 
     await waitFor(() => {
       expect(mockUpdateInventoryItem).toHaveBeenCalledWith("1", { status: "low" }, "test-token");
+    });
+  });
+
+  // T036: shopping list auto-add toast
+  it("shows toast when a staple status change adds it to the shopping list", async () => {
+    mockListInventory.mockResolvedValue([
+      makeItem({ id: "1", name: "Milk Carton", status: "ok", location: "fridge" }),
+    ]);
+    mockUpdateInventoryItem.mockResolvedValue(
+      makeItem({
+        id: "1",
+        name: "Milk Carton",
+        status: "low",
+        location: "fridge",
+        shopping_item_created: true,
+        shopping_item_name: "Milk",
+      } as InventoryItem)
+    );
+
+    render(<InventoryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Milk Carton")).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByLabelText("Cycle status for Milk Carton"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Added Milk to your shopping list")).toBeDefined();
+    });
+  });
+
+  // T038: removal reason dialog
+  it("renders removal dialog with three reasons and 'used' pre-selected", async () => {
+    mockListInventory.mockResolvedValue([
+      makeItem({ id: "1", name: "Old Cheese", location: "fridge" }),
+    ]);
+
+    render(<InventoryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Old Cheese")).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByLabelText("Remove Old Cheese"));
+
+    const used = screen.getByLabelText("Used it up") as HTMLInputElement;
+    expect(screen.getByLabelText("Throwing it away")).toBeDefined();
+    expect(screen.getByLabelText("Transferring it")).toBeDefined();
+    expect(used.checked).toBe(true);
+  });
+
+  it("confirm calls deleteInventoryItem with the selected reason", async () => {
+    mockListInventory.mockResolvedValue([
+      makeItem({ id: "1", name: "Old Cheese", location: "fridge" }),
+    ]);
+    mockDeleteInventoryItem.mockResolvedValue(undefined);
+
+    render(<InventoryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Old Cheese")).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByLabelText("Remove Old Cheese"));
+    fireEvent.click(screen.getByLabelText("Throwing it away"));
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+
+    await waitFor(() => {
+      expect(mockDeleteInventoryItem).toHaveBeenCalledWith(
+        "1",
+        { removed_reason: "thrown" },
+        "test-token"
+      );
     });
   });
 });

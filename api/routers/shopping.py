@@ -4,9 +4,10 @@ from typing import Annotated
 
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
-from api.models import Membership, ShoppingItem
+from api.models import CanonicalProduct, InventoryItem, Membership, ShoppingItem
+from api.routers.inventory import InventoryItemRead, _inventory_item_to_read
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 router = APIRouter()
@@ -30,7 +31,19 @@ class ShoppingItemResponse(BaseModel):
     group_id: uuid.UUID
     name: str
     checked: bool
+    canonical_product_id: uuid.UUID | None = None
     updated_at: datetime
+
+
+class LoopCloseRequest(BaseModel):
+    shopping_item_ids: list[uuid.UUID] = Field(min_length=1)
+
+    model_config = {"extra": "forbid"}
+
+
+class LoopCloseResponse(BaseModel):
+    created: list[InventoryItemRead]
+    skipped: list[uuid.UUID]
 
 
 def _get_membership(
@@ -52,6 +65,7 @@ def _item_to_response(item: ShoppingItem) -> ShoppingItemResponse:
         group_id=item.group_id,
         name=item.name,
         checked=item.checked,
+        canonical_product_id=item.canonical_product_id,
         updated_at=item.updated_at,
     )
 
@@ -133,6 +147,67 @@ def patch_shopping_item(
     session.commit()
     session.refresh(item)
     return _item_to_response(item)
+
+
+# ── T044: Shopping list loop-close ────────────────────────────────────────────
+
+
+@router.post(
+    "/groups/{group_id}/inventory/from-shopping",
+    response_model=LoopCloseResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def inventory_from_shopping(
+    group_id: uuid.UUID,
+    body: LoopCloseRequest,
+    auth: Annotated[PersonAuth, Depends(get_person_auth)],
+    session: Annotated[Session, Depends(get_session)],
+) -> LoopCloseResponse:
+    membership = _get_membership(session, auth.person_id, group_id)
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Caller is not a member of this group",
+        )
+
+    created: list[InventoryItemRead] = []
+    new_items: list[tuple[InventoryItem, str]] = []
+    skipped: list[uuid.UUID] = []
+
+    for item_id in body.shopping_item_ids:
+        shopping_item = session.get(ShoppingItem, item_id)
+        # Items that can't be converted (unknown, foreign group, or never associated
+        # with a canonical product) are skipped, not failed — partial success is fine
+        if (
+            not shopping_item
+            or shopping_item.group_id != group_id
+            or shopping_item.canonical_product_id is None
+        ):
+            skipped.append(item_id)
+            continue
+
+        canonical_product = session.get(CanonicalProduct, shopping_item.canonical_product_id)
+        if not canonical_product:
+            skipped.append(item_id)
+            continue
+
+        inventory_item = InventoryItem(
+            group_id=group_id,
+            canonical_product_id=canonical_product.id,
+            name=canonical_product.name,
+            location=canonical_product.usual_location,
+            status="ok",
+            added_by=auth.person_id,
+        )
+        session.add(inventory_item)
+        new_items.append((inventory_item, canonical_product.name))
+
+    session.commit()
+    for inventory_item, cp_name in new_items:
+        session.refresh(inventory_item)
+        created.append(_inventory_item_to_read(inventory_item, cp_name))
+
+    return LoopCloseResponse(created=created, skipped=skipped)
 
 
 @router.delete("/shopping/{item_id}", status_code=status.HTTP_204_NO_CONTENT)

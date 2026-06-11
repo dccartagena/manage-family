@@ -1,9 +1,15 @@
 /**
  * Failing tests for shopping page — must fail before shopping/page.tsx is implemented.
  */
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import ShoppingPage from "../page";
+
+const mockFromShoppingItems = vi.fn();
+
+vi.mock("@/lib/inventory", () => ({
+  fromShoppingItems: (...args: unknown[]) => mockFromShoppingItems(...args),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -34,6 +40,7 @@ const mockItems = [
     group_id: "group-1",
     name: "Milk",
     checked: false,
+    canonical_product_id: null,
     updated_at: "2026-06-03T10:00:00Z",
   },
   {
@@ -41,6 +48,7 @@ const mockItems = [
     group_id: "group-1",
     name: "Eggs",
     checked: true,
+    canonical_product_id: "cp-1",
     updated_at: "2026-06-03T10:00:00Z",
   },
 ];
@@ -89,5 +97,40 @@ describe("ShoppingPage", () => {
       value: true,
       configurable: true,
     });
+  });
+});
+
+// T043: loop-close prompt
+describe("ShoppingPage loop-close prompt", () => {
+  beforeEach(() => {
+    mockFromShoppingItems.mockClear();
+  });
+
+  it("prompt appears when checked items have a canonical product", async () => {
+    render(<ShoppingPage />);
+    expect(await screen.findByText(/add 1 item\(s\) to inventory\?/i)).toBeInTheDocument();
+  });
+
+  it("confirm calls fromShoppingItems with the checked linked item ids", async () => {
+    mockFromShoppingItems.mockResolvedValue({ created: [{ id: "inv-1" }], skipped: [] });
+
+    render(<ShoppingPage />);
+    await screen.findByText(/add 1 item\(s\) to inventory\?/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to inventory" }));
+
+    await waitFor(() => {
+      expect(mockFromShoppingItems).toHaveBeenCalledWith("group-1", ["item-2"], "tok");
+    });
+  });
+
+  it("dismiss hides the prompt without calling the API", async () => {
+    render(<ShoppingPage />);
+    await screen.findByText(/add 1 item\(s\) to inventory\?/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+
+    expect(screen.queryByText(/add 1 item\(s\) to inventory\?/i)).toBeNull();
+    expect(mockFromShoppingItems).not.toHaveBeenCalled();
   });
 });

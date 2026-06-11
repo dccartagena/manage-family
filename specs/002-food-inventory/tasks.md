@@ -107,13 +107,13 @@
 
 ### Tests (write first — must be RED before implementation)
 
-- [ ] T033 [P] [US3] Write failing integration tests for staple side-effect in `PATCH /inventory/{item_id}` — (a) staple item status→low: response has `shopping_item_created: true` and new row in shopping_items, (b) staple already on list (unchecked): `shopping_item_created: false`, no duplicate, (c) non-staple item: `shopping_item_created: false` — `api/tests/test_inventory.py`
+- [x] T033 [P] [US3] Write failing integration tests for staple side-effect in `PATCH /inventory/{item_id}` — (a) staple item status→low: response has `shopping_item_created: true` and new row in shopping_items, (b) staple already on list (unchecked): `shopping_item_created: false`, no duplicate, (c) non-staple item: `shopping_item_created: false` — `api/tests/test_inventory.py`
 
 ### Implementation
 
-- [ ] T034 [US3] Add staple auto-add side-effect to `PATCH /inventory/{item_id}` in `api/routers/inventory.py` — when `status == "low"`: load `canonical_product`; if `is_staple`: query for unchecked `shopping_item` with same `canonical_product_id` and `group_id`; if absent: create `ShoppingItem`; set `shopping_item_created: True` and `shopping_item_name` in response (depends T033)
-- [ ] T035 [US3] Update `updateInventoryItem` in `web/src/lib/inventory.ts` to read `shopping_item_created` and `shopping_item_name` from response and include in return type (depends T031)
-- [ ] T036 [US3] Add shopping list auto-add toast in `web/src/app/inventory/page.tsx` — after `updateInventoryItem` resolves: if `shopping_item_created === true` show brief `"Added [name] to your shopping list"` toast for 3 seconds (depends T032, T035)
+- [x] T034 [US3] Add staple auto-add side-effect to `PATCH /inventory/{item_id}` in `api/routers/inventory.py` — when `status == "low"`: load `canonical_product`; if `is_staple`: query for unchecked `shopping_item` with same `canonical_product_id` and `group_id`; if absent: create `ShoppingItem`; set `shopping_item_created: True` and `shopping_item_name` in response (depends T033)
+- [x] T035 [US3] Update `updateInventoryItem` in `web/src/lib/inventory.ts` to read `shopping_item_created` and `shopping_item_name` from response and include in return type (depends T031)
+- [x] T036 [US3] Add shopping list auto-add toast in `web/src/app/inventory/page.tsx` — after `updateInventoryItem` resolves: if `shopping_item_created === true` show brief `"Added [name] to your shopping list"` toast for 3 seconds (depends T032, T035)
 
 **Checkpoint**: `pytest api/tests/test_inventory.py -k "staple" -v` all green; tap a staple item to `low` in browser; verify toast appears and shopping list gains new item; tap second staple item for same canonical product to `low`; verify no duplicate.
 
@@ -127,14 +127,14 @@
 
 ### Tests (write first — must be RED before implementation)
 
-- [ ] T037 [P] [US4] Write failing integration tests for `DELETE /inventory/{item_id}` — (a) valid removal with reason sets removed_at and removed_reason, item absent from GET list, (b) missing removed_reason → 422, (c) invalid reason value → 422, (d) non-member → 403, (e) unknown id → 404 — `api/tests/test_inventory.py`
-- [ ] T038 [P] [US4] Write failing component tests for removal dialog — (a) renders reason picker with three options, (b) "used" is pre-selected, (c) confirm calls `deleteInventoryItem` with selected reason — `web/src/app/inventory/__tests__/inventory.test.tsx`
+- [x] T037 [P] [US4] Write failing integration tests for `DELETE /inventory/{item_id}` — (a) valid removal with reason sets removed_at and removed_reason, item absent from GET list, (b) missing removed_reason → 422, (c) invalid reason value → 422, (d) non-member → 403, (e) unknown id → 404 — `api/tests/test_inventory.py`
+- [x] T038 [P] [US4] Write failing component tests for removal dialog — (a) renders reason picker with three options, (b) "used" is pre-selected, (c) confirm calls `deleteInventoryItem` with selected reason — `web/src/app/inventory/__tests__/inventory.test.tsx`
 
 ### Implementation
 
-- [ ] T039 [US4] Implement `DELETE /inventory/{item_id}` in `api/routers/inventory.py` — accept `RemoveInventoryItemRequest(removed_reason: Literal["used","thrown","transferred"])`; set `removed_at = datetime.utcnow()` and `removed_reason`; return 204 (depends T037)
-- [ ] T040 [P] [US4] Implement `deleteInventoryItem` in `web/src/lib/inventory.ts` — replace stub with `DELETE` request including `removed_reason` body (depends T011)
-- [ ] T041 [US4] Add remove button and reason dialog to `web/src/app/inventory/page.tsx` — long-press or swipe-to-reveal remove button per item; dialog with "Used it up", "Throwing it away", "Transferring it" options (default: used); confirm calls `deleteInventoryItem`; optimistic removal from list with revert on error (depends T038, T040)
+- [x] T039 [US4] Implement `DELETE /inventory/{item_id}` in `api/routers/inventory.py` — accept `RemoveInventoryItemRequest(removed_reason: Literal["used","thrown","transferred"])`; set `removed_at = datetime.utcnow()` and `removed_reason`; return 204 (depends T037)
+- [x] T040 [P] [US4] Implement `deleteInventoryItem` in `web/src/lib/inventory.ts` — replace stub with `DELETE` request including `removed_reason` body (depends T011)
+- [x] T041 [US4] Add remove button and reason dialog to `web/src/app/inventory/page.tsx` — long-press or swipe-to-reveal remove button per item; dialog with "Used it up", "Throwing it away", "Transferring it" options (default: used); confirm calls `deleteInventoryItem`; optimistic removal from list with revert on error (depends T038, T040)
 
 **Checkpoint**: `pytest api/tests/test_inventory.py -k "remove or delete" -v` all green; remove an item in browser; verify it disappears from list; verify `removed_reason` in DB.
 
@@ -148,14 +148,14 @@
 
 ### Tests (write first — must be RED before implementation)
 
-- [ ] T042 [P] [US5] Write failing integration tests for `POST /groups/{group_id}/inventory/from-shopping` — (a) items with canonical_product_id get inventory rows created, (b) items without canonical_product_id appear in skipped list, (c) empty list → 422, (d) non-member → 403 — `api/tests/test_inventory.py`
-- [ ] T043 [P] [US5] Write failing component tests for loop-close prompt in shopping page — (a) prompt appears when items are checked, (b) confirm calls `fromShoppingItems`, (c) dismiss hides prompt without calling API — `web/src/app/shopping/__tests__/shopping.test.tsx` (create file if absent)
+- [x] T042 [P] [US5] Write failing integration tests for `POST /groups/{group_id}/inventory/from-shopping` — (a) items with canonical_product_id get inventory rows created, (b) items without canonical_product_id appear in skipped list, (c) empty list → 422, (d) non-member → 403 — `api/tests/test_inventory.py`
+- [x] T043 [P] [US5] Write failing component tests for loop-close prompt in shopping page — (a) prompt appears when items are checked, (b) confirm calls `fromShoppingItems`, (c) dismiss hides prompt without calling API — `web/src/app/shopping/__tests__/shopping.test.tsx` (create file if absent)
 
 ### Implementation
 
-- [ ] T044 [US5] Add `POST /groups/{group_id}/inventory/from-shopping` endpoint to `api/routers/shopping.py` — accept `LoopCloseRequest(shopping_item_ids: list[UUID])`; for each ID: load shopping_item, if has canonical_product_id create inventory_item pre-filled from canonical_product (location=usual_location, status=ok), else add to skipped; return `LoopCloseResponse(created: list[InventoryItemRead], skipped: list[UUID])` (depends T042)
-- [ ] T045 [P] [US5] Implement `fromShoppingItems` in `web/src/lib/inventory.ts` — replace stub with POST to `/groups/{group_id}/inventory/from-shopping` (depends T011)
-- [ ] T046 [US5] Add loop-close prompt to `web/src/app/shopping/page.tsx` — when items are checked/bought and at least one has `canonical_product_id`: show bottom sheet or banner "Add [N] item(s) to inventory?"; confirm calls `fromShoppingItems` and shows "Added [N] item(s)" toast; dismiss hides prompt; items without canonical_product_id excluded from count with no UI noise (depends T043, T045)
+- [x] T044 [US5] Add `POST /groups/{group_id}/inventory/from-shopping` endpoint to `api/routers/shopping.py` — accept `LoopCloseRequest(shopping_item_ids: list[UUID])`; for each ID: load shopping_item, if has canonical_product_id create inventory_item pre-filled from canonical_product (location=usual_location, status=ok), else add to skipped; return `LoopCloseResponse(created: list[InventoryItemRead], skipped: list[UUID])` (depends T042)
+- [x] T045 [P] [US5] Implement `fromShoppingItems` in `web/src/lib/inventory.ts` — replace stub with POST to `/groups/{group_id}/inventory/from-shopping` (depends T011)
+- [x] T046 [US5] Add loop-close prompt to `web/src/app/shopping/page.tsx` — when items are checked/bought and at least one has `canonical_product_id`: show bottom sheet or banner "Add [N] item(s) to inventory?"; confirm calls `fromShoppingItems` and shows "Added [N] item(s)" toast; dismiss hides prompt; items without canonical_product_id excluded from count with no UI noise (depends T043, T045)
 
 **Checkpoint**: `pytest api/tests/test_inventory.py -k "loop" -v` all green; mark a shopping item with canonical product as bought; verify loop-close prompt appears; confirm; verify inventory item created.
 
@@ -165,9 +165,9 @@
 
 **Purpose**: Accessibility, bundle hygiene, end-to-end validation.
 
-- [ ] T047 [P] Add accessibility attributes to `web/src/app/inventory/page.tsx` and `web/src/app/inventory/scan/page.tsx` — `aria-label` on status cycle buttons ("Cycle status for [name]"), `role="status"` on use-soon section, `aria-live="polite"` on toast, `aria-label` on barcode scanner video element
-- [ ] T048 [P] Verify `@zxing/browser` tree-shaking — run `npm run build` in `web/`, check `.next/` bundle output; confirm scanner code absent from pages other than `/inventory/scan`
-- [ ] T049 Run quickstart.md end-to-end validation — activate venv, `alembic -c api/alembic.ini upgrade head`, `pytest api/tests/test_inventory.py -v`, `cd web && npm test -- --run src/app/inventory`; all pass
+- [x] T047 [P] Add accessibility attributes to `web/src/app/inventory/page.tsx` and `web/src/app/inventory/scan/page.tsx` — `aria-label` on status cycle buttons ("Cycle status for [name]"), `role="status"` on use-soon section, `aria-live="polite"` on toast, `aria-label` on barcode scanner video element
+- [x] T048 [P] Verify `@zxing/browser` tree-shaking — run `npm run build` in `web/`, check `.next/` bundle output; confirm scanner code absent from pages other than `/inventory/scan`
+- [x] T049 Run quickstart.md end-to-end validation — activate venv, `alembic -c api/alembic.ini upgrade head`, `pytest api/tests/test_inventory.py -v`, `cd web && npm test -- --run src/app/inventory`; all pass
 
 ---
 
