@@ -113,7 +113,7 @@ describe("BarcodeScanner", () => {
   });
 
   it("calls onDetected via BarcodeDetector (primary path)", async () => {
-    mockBarcodeDetectorDetect.mockResolvedValue([{ rawValue: "8718309975563" }]);
+    mockBarcodeDetectorDetect.mockResolvedValue([{ rawValue: "8718309975562" }]);
     const onDetected = vi.fn();
 
     render(<BarcodeScanner onDetected={onDetected} />);
@@ -125,7 +125,63 @@ describe("BarcodeScanner", () => {
 
     await advanceDecode();
 
-    expect(onDetected).toHaveBeenCalledWith("8718309975563");
+    expect(onDetected).toHaveBeenCalledWith("8718309975562");
+  });
+
+  it("ignores non-retail symbols from ZBar (e.g. QR codes)", async () => {
+    mockScanImageData.mockResolvedValue([
+      { decode: () => "https://example.com/not-a-barcode", typeName: "ZBAR_QRCODE" },
+    ]);
+    const onDetected = vi.fn();
+
+    render(<BarcodeScanner onDetected={onDetected} />);
+    const video = document.querySelector("video")!;
+    await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
+    await act(async () => {
+      fireCanPlay(video);
+    });
+
+    await advanceDecode();
+    await advanceDecode();
+
+    expect(onDetected).not.toHaveBeenCalled();
+  });
+
+  it("normalizes UPC-A reads to EAN-13 by prefixing a zero", async () => {
+    mockScanImageData.mockResolvedValue([{ decode: () => "036000291452", typeName: "ZBAR_UPCA" }]);
+    const onDetected = vi.fn();
+
+    render(<BarcodeScanner onDetected={onDetected} />);
+    const video = document.querySelector("video")!;
+    await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
+    await act(async () => {
+      fireCanPlay(video);
+    });
+
+    await advanceDecode();
+
+    expect(onDetected).toHaveBeenCalledWith("0036000291452");
+  });
+
+  it("rejects reads with an invalid GS1 checksum", async () => {
+    // 1234567890123 fails the EAN-13 checksum (valid check digit is 8)
+    mockBarcodeDetectorDetect.mockResolvedValue([{ rawValue: "1234567890123" }]);
+    mockScanImageData.mockResolvedValue([
+      { decode: () => "1234567890123", typeName: "ZBAR_EAN13" },
+    ]);
+    const onDetected = vi.fn();
+
+    render(<BarcodeScanner onDetected={onDetected} />);
+    const video = document.querySelector("video")!;
+    await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
+    await act(async () => {
+      fireCanPlay(video);
+    });
+
+    await advanceDecode();
+    await advanceDecode();
+
+    expect(onDetected).not.toHaveBeenCalled();
   });
 
   it("calls onDetected via ZBar WASM when BarcodeDetector returns no results", async () => {

@@ -27,6 +27,7 @@ interface GroupItem {
 type PageState =
   | { stage: "group-select" }
   | { stage: "scanning"; groupId: string }
+  | { stage: "looking-up"; groupId: string }
   | { stage: "product-form"; groupId: string; barcode: string; prefill: ProductPrefill }
   | { stage: "manual-form"; groupId: string; barcode: string | null }
   | { stage: "saving" };
@@ -102,8 +103,7 @@ export default function ScanPage() {
       if (state.stage !== "scanning") return;
       const { groupId } = state;
 
-      // Prevent re-triggering during async work by moving to a neutral state temporarily
-      setState({ stage: "group-select" });
+      setState({ stage: "looking-up", groupId });
 
       try {
         const token = await fetchAccessToken();
@@ -228,6 +228,17 @@ export default function ScanPage() {
             </li>
           ))}
         </ul>
+      </main>
+    );
+  }
+
+  if (state.stage === "looking-up") {
+    return (
+      <main className="mx-auto max-w-md p-4">
+        <h1 className="mb-4 text-xl font-semibold">Scan Barcode</h1>
+        <p role="status" className="text-center text-muted-foreground">
+          Looking up product…
+        </p>
       </main>
     );
   }
