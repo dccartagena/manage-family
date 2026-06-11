@@ -6,14 +6,16 @@ from sqlmodel import Session, create_engine
 
 _engine = None
 
-_PSYCOPG2_INVALID_PARAMS = frozenset({
-    "supa",
-    "pgbouncer",
-    "workaround",
-    "connection_limit",
-    "pool_timeout",
-    "prepared_statements",
-})
+_PSYCOPG2_INVALID_PARAMS = frozenset(
+    {
+        "supa",
+        "pgbouncer",
+        "workaround",
+        "connection_limit",
+        "pool_timeout",
+        "prepared_statements",
+    }
+)
 
 
 def _clean_db_url(url: str) -> str:

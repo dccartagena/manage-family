@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createAuthBrowserClient } from "@/lib/supabase";
 import { subscribeToShopping, type ShoppingRealtimePayload } from "@/lib/realtime";
 import { drainShoppingQueue, enqueueShoppingMutation } from "@/lib/sync";
+import { fromShoppingItems } from "@/lib/inventory";
 
 interface GroupItem {
   id: string;
@@ -18,6 +19,7 @@ interface ShoppingItem {
   group_id: string;
   name: string;
   checked: boolean;
+  canonical_product_id: string | null;
   updated_at: string;
 }
 
@@ -105,6 +107,9 @@ export default function ShoppingPage() {
   );
   const [newItemName, setNewItemName] = useState("");
   const [adding, setAdding] = useState(false);
+  const [loopCloseDismissed, setLoopCloseDismissed] = useState(false);
+  const [loopClosing, setLoopClosing] = useState(false);
+  const [loopToast, setLoopToast] = useState("");
   const cleanupRealtimeRef = useRef<(() => void) | null>(null);
 
   const applyRealtimePayload = useCallback((payload: ShoppingRealtimePayload) => {
@@ -146,6 +151,7 @@ export default function ShoppingPage() {
       cleanupRealtimeRef.current = null;
     }
 
+    setLoopCloseDismissed(false);
     setItemsLoading(true);
     fetchShoppingItems(selectedGroupId)
       .then((loaded) => {
@@ -229,6 +235,31 @@ export default function ShoppingPage() {
       setError(err instanceof Error ? err.message : "Failed to add item");
     } finally {
       setAdding(false);
+    }
+  }
+
+  // T046: loop-close — offer to add bought (checked) items with a canonical
+  // product to the inventory; items without one stay silent
+  const checkedLinkedItems = items.filter((i) => i.checked && i.canonical_product_id);
+
+  async function handleLoopClose() {
+    if (!selectedGroupId || checkedLinkedItems.length === 0) return;
+    setLoopClosing(true);
+    try {
+      const token = await fetchAccessToken();
+      if (!token) throw new Error("Not authenticated");
+      const result = await fromShoppingItems(
+        selectedGroupId,
+        checkedLinkedItems.map((i) => i.id),
+        token
+      );
+      setLoopToast(`Added ${result.created.length} item(s)`);
+      setLoopCloseDismissed(true);
+      setTimeout(() => setLoopToast(""), 3000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to add items to inventory");
+    } finally {
+      setLoopClosing(false);
     }
   }
 
@@ -397,6 +428,37 @@ export default function ShoppingPage() {
               ))}
             </ul>
           )}
+
+          {checkedLinkedItems.length > 0 && !loopCloseDismissed && (
+            <div className="rounded-lg border border-border bg-card p-3">
+              <p className="mb-2 text-sm">Add {checkedLinkedItems.length} item(s) to inventory?</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={loopClosing}
+                  onClick={handleLoopClose}
+                  className="flex-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  Add to inventory
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoopCloseDismissed(true)}
+                  className="flex-1 rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div aria-live="polite">
+            {loopToast && (
+              <p className="rounded-lg bg-foreground px-4 py-2 text-center text-sm text-background">
+                {loopToast}
+              </p>
+            )}
+          </div>
         </>
       )}
     </main>

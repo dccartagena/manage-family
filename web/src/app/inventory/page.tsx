@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createAuthBrowserClient } from "@/lib/supabase";
 import {
+  deleteInventoryItem,
   listInventory,
   updateInventoryItem,
   type InventoryItem,
@@ -27,6 +28,14 @@ const STATUS_CYCLE: Record<string, "ok" | "low" | "out"> = {
   low: "out",
   out: "ok",
 };
+
+type RemoveReason = "used" | "thrown" | "transferred";
+
+const REMOVE_REASONS: Array<{ value: RemoveReason; label: string }> = [
+  { value: "used", label: "Used it up" },
+  { value: "thrown", label: "Throwing it away" },
+  { value: "transferred", label: "Transferring it" },
+];
 
 interface GroupItem {
   id: string;
@@ -79,6 +88,16 @@ export default function InventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<InventoryItem | null>(null);
+  const [removeReason, setRemoveReason] = useState<RemoveReason>("used");
+
+  // Auto-hide the toast after 3 seconds
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Load groups if no groupId in URL
   useEffect(() => {
@@ -126,12 +145,38 @@ export default function InventoryPage() {
         token
       );
       setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)));
+      if (updated.shopping_item_created) {
+        setToast(`Added ${updated.shopping_item_name} to your shopping list`);
+      }
     } catch {
       // Revert on error
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: item.status } : i)));
       setError("Failed to update status");
     }
   }, []);
+
+  const handleOpenRemove = useCallback((item: InventoryItem) => {
+    setRemoveReason("used");
+    setRemoveTarget(item);
+  }, []);
+
+  const handleConfirmRemove = useCallback(async () => {
+    if (!removeTarget) return;
+    const target = removeTarget;
+    const reason = removeReason;
+    setRemoveTarget(null);
+    // Optimistic removal with revert on error
+    setItems((prev) => prev.filter((i) => i.id !== target.id));
+
+    try {
+      const token = await fetchAccessToken();
+      if (!token) throw new Error("Not authenticated");
+      await deleteInventoryItem(target.id, { removed_reason: reason }, token);
+    } catch {
+      setItems((prev) => [...prev, target]);
+      setError("Failed to remove item");
+    }
+  }, [removeTarget, removeReason]);
 
   // ── Group picker ───────────────────────────────────────────────────────────
 
@@ -196,16 +241,26 @@ export default function InventoryPage() {
           <h2 className="mb-2 text-sm font-semibold text-amber-800">Use soon</h2>
           <ul className="space-y-1">
             {useSoonItems.map((item) => (
-              <li key={item.id} className={item.status === "out" ? "line-through opacity-40" : ""}>
+              <li
+                key={item.id}
+                className={`flex items-center gap-1 ${item.status === "out" ? "line-through opacity-40" : ""}`}
+              >
                 <button
                   aria-label={`Cycle status for ${item.name}`}
-                  className="flex w-full items-center justify-between rounded px-2 py-1 text-left text-sm hover:bg-amber-100"
+                  className="flex flex-1 items-center justify-between rounded px-2 py-1 text-left text-sm hover:bg-amber-100"
                   onClick={() => handleCycleStatus(item)}
                 >
                   <span>{item.name}</span>
                   <span className="text-xs text-muted-foreground">
                     {item.expiry_date} · {item.status}
                   </span>
+                </button>
+                <button
+                  aria-label={`Remove ${item.name}`}
+                  className="shrink-0 rounded px-2 py-1 text-muted-foreground hover:bg-amber-100 hover:text-foreground"
+                  onClick={() => handleOpenRemove(item)}
+                >
+                  ×
                 </button>
               </li>
             ))}
@@ -227,17 +282,26 @@ export default function InventoryPage() {
               {[...activeItems, ...outItems].map((item) => (
                 <li
                   key={item.id}
-                  className={item.status === "out" ? "line-through opacity-40" : ""}
+                  className={`flex items-center gap-1 ${
+                    item.status === "out" ? "line-through opacity-40" : ""
+                  }`}
                 >
                   <button
                     aria-label={`Cycle status for ${item.name}`}
-                    className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-left text-sm hover:bg-accent"
+                    className="flex flex-1 items-center justify-between rounded-lg border border-border px-3 py-2 text-left text-sm hover:bg-accent"
                     onClick={() => handleCycleStatus(item)}
                   >
                     <span>{item.name}</span>
                     <span className="text-xs text-muted-foreground">
                       {item.expiry_date ?? "no expiry"} · {item.status}
                     </span>
+                  </button>
+                  <button
+                    aria-label={`Remove ${item.name}`}
+                    className="shrink-0 rounded px-2 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+                    onClick={() => handleOpenRemove(item)}
+                  >
+                    ×
                   </button>
                 </li>
               ))}
@@ -248,6 +312,55 @@ export default function InventoryPage() {
 
       {items.length === 0 && (
         <p className="text-center text-sm text-muted-foreground">No items yet.</p>
+      )}
+
+      <div aria-live="polite">
+        {toast && (
+          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-sm text-background shadow-lg">
+            {toast}
+          </div>
+        )}
+      </div>
+
+      {removeTarget && (
+        <div
+          role="dialog"
+          aria-label={`Remove ${removeTarget.name}`}
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+        >
+          <div className="w-full max-w-md rounded-lg bg-background p-4 shadow-lg">
+            <h2 className="mb-3 text-base font-semibold">Remove {removeTarget.name}?</h2>
+            <fieldset className="mb-4 space-y-2">
+              <legend className="sr-only">Removal reason</legend>
+              {REMOVE_REASONS.map(({ value, label }) => (
+                <label key={value} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="remove-reason"
+                    value={value}
+                    checked={removeReason === value}
+                    onChange={() => setRemoveReason(value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </fieldset>
+            <div className="flex gap-3">
+              <button
+                className="flex-1 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"
+                onClick={() => setRemoveTarget(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-lg bg-destructive px-4 py-2 text-sm text-destructive-foreground hover:bg-destructive/90"
+                onClick={handleConfirmRemove}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );

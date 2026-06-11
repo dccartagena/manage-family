@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
-from api.models import CanonicalProduct, InventoryItem, Membership, ProductCache
+from api.models import CanonicalProduct, InventoryItem, Membership, ProductCache, ShoppingItem
 from api.services.product_lookup import ProductLookupService
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, field_validator
@@ -112,6 +112,12 @@ class InventoryItemUpdate(BaseModel):
 class InventoryItemUpdateResponse(InventoryItemRead):
     shopping_item_created: bool
     shopping_item_name: str | None
+
+
+class RemoveInventoryItemRequest(BaseModel):
+    removed_reason: Literal["used", "thrown", "transferred"]
+
+    model_config = {"extra": "forbid"}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -408,14 +414,70 @@ def update_inventory_item(
         item.expiry_date = datetime.strptime(body.expiry_date, "%d-%m-%Y").date()
 
     session.add(item)
+
+    cp = session.get(CanonicalProduct, item.canonical_product_id)
+
+    # T034: staple auto-add — status→low on a staple puts it on the shopping list,
+    # unless an unchecked entry for the same canonical product already exists
+    shopping_item_created = False
+    shopping_item_name: str | None = None
+    if body.status == "low" and cp and cp.is_staple:
+        existing = session.exec(
+            select(ShoppingItem).where(
+                ShoppingItem.group_id == item.group_id,
+                ShoppingItem.canonical_product_id == cp.id,
+                ShoppingItem.checked == False,  # noqa: E712 — SQL expression, not identity
+            )
+        ).first()
+        if not existing:
+            session.add(
+                ShoppingItem(
+                    group_id=item.group_id,
+                    name=cp.name,
+                    checked=False,
+                    canonical_product_id=cp.id,
+                )
+            )
+            shopping_item_created = True
+            shopping_item_name = cp.name
+
     session.commit()
     session.refresh(item)
 
-    cp = session.get(CanonicalProduct, item.canonical_product_id)
     cp_name = cp.name if cp else ""
     base = _inventory_item_to_read(item, cp_name)
     return InventoryItemUpdateResponse(
         **base.model_dump(),
-        shopping_item_created=False,
-        shopping_item_name=None,
+        shopping_item_created=shopping_item_created,
+        shopping_item_name=shopping_item_name,
     )
+
+
+# ── T039: Inventory item removal (soft delete) ────────────────────────────────
+
+
+@router.delete("/inventory/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_inventory_item(
+    item_id: uuid.UUID,
+    body: RemoveInventoryItemRequest,
+    auth: Annotated[PersonAuth, Depends(get_person_auth)],
+    session: Annotated[Session, Depends(get_session)],
+) -> None:
+    item = session.get(InventoryItem, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Inventory item not found",
+        )
+
+    membership = _get_membership(session, auth.person_id, item.group_id)
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Caller is not a member of this group",
+        )
+
+    item.removed_at = datetime.utcnow()
+    item.removed_reason = body.removed_reason
+    session.add(item)
+    session.commit()
