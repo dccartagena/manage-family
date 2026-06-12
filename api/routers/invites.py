@@ -1,4 +1,3 @@
-import os
 import secrets
 import uuid
 from datetime import UTC, datetime
@@ -7,6 +6,7 @@ from typing import Annotated
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
 from api.models import Group, Invite, Membership
+from api.urls import public_base_url
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session, select
@@ -37,8 +37,7 @@ class AcceptResponse(BaseModel):
 
 
 def _invite_url(token: str) -> str:
-    base = os.environ.get("NEXT_PUBLIC_APP_URL", "http://localhost:3000")
-    return f"{base}/join/{token}"
+    return f"{public_base_url()}/join/{token}"
 
 
 def _is_valid_invite(invite: Invite) -> bool:

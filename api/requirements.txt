@@ -1,0 +1,14 @@
+# Runtime dependencies installed by Vercel's Python builder (@vercel/python).
+# Keep in sync with [project.dependencies] in pyproject.toml — this file exists
+# because the Vercel builder only reads requirements.txt, not pyproject.toml.
+# Local-only tools (uvicorn, alembic) are intentionally excluded to keep the
+# serverless bundle small.
+fastapi>=0.115.0
+sqlmodel>=0.0.22
+psycopg2-binary>=2.9.10
+python-jose[cryptography]>=3.3.0
+httpx>=0.28.0
+python-dotenv>=1.0.0
+icalendar>=6.1.0
+recurring-ical-events>=3.3.0
+python-dateutil>=2.9.0

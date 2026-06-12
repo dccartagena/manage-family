@@ -7,6 +7,14 @@ type Mode = "signin" | "signup";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+// Return path after auth (e.g. /join/<token> from an invite link). Read from
+// window.location instead of useSearchParams to avoid a Suspense boundary;
+// only same-origin paths are accepted to prevent open redirects.
+function nextPath(): string {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+}
+
 export default function LoginPage() {
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
@@ -30,7 +38,13 @@ export default function LoginPage() {
     const supabase = createAuthBrowserClient();
 
     if (mode === "signup") {
-      const { data, error: authError } = await supabase.auth.signUp({ email, password });
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/callback?next=${encodeURIComponent(nextPath())}`,
+        },
+      });
       if (authError) {
         setError(authError.message);
         setLoading(false);
@@ -45,7 +59,7 @@ export default function LoginPage() {
         method: "POST",
         headers: { Authorization: `Bearer ${data.session.access_token}` },
       });
-      window.location.href = "/dashboard";
+      window.location.href = nextPath();
       return;
     }
 
@@ -59,7 +73,7 @@ export default function LoginPage() {
       method: "POST",
       headers: { Authorization: `Bearer ${data.session.access_token}` },
     });
-    window.location.href = "/dashboard";
+    window.location.href = nextPath();
   }
 
   return (

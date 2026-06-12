@@ -1,4 +1,3 @@
-import os
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
@@ -7,6 +6,7 @@ import recurring_ical_events
 from api.auth import PersonAuth, get_person_auth
 from api.db import get_session
 from api.models import Event, Group, Membership, Person, Reminder
+from api.urls import public_base_url
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response
 from icalendar import Alarm, Calendar, vRecur
@@ -157,8 +157,6 @@ def rotate_ical_secret(
     session.add(person)
     session.commit()
 
-    app_url = os.environ.get("VERCEL_URL", "http://localhost:8000")
-    if not app_url.startswith("http"):
-        app_url = f"https://{app_url}"
+    app_url = public_base_url(default="http://localhost:8000")
 
     return RotateResponse(new_feed_url=f"{app_url}/api/v1/ical/{new_secret}")

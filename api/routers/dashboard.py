@@ -7,6 +7,7 @@ from api.db import get_session
 from api.models import Event, Group, Membership, ShoppingItem, Task
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlmodel import Session, select
 
 router = APIRouter()
@@ -96,17 +97,19 @@ def get_dashboard(
 
     shopping_counts: list[DashboardShoppingCount] = []
     for group_id in group_ids:
-        unchecked = session.exec(
-            select(ShoppingItem).where(
+        unchecked_count = session.exec(
+            select(func.count())
+            .select_from(ShoppingItem)
+            .where(
                 ShoppingItem.group_id == group_id,
                 ShoppingItem.checked == False,  # noqa: E712
             )
-        ).all()
+        ).one()
         shopping_counts.append(
             DashboardShoppingCount(
                 group_id=group_id,
                 group_name=group_name_map[group_id],
-                unchecked_count=len(unchecked),
+                unchecked_count=unchecked_count,
             )
         )
 
