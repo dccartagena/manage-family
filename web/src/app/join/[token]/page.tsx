@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { createAuthBrowserClient } from "@/lib/supabase";
 
@@ -45,6 +45,17 @@ export default function JoinPage() {
   const [state, setState] = useState<State>("prompt");
   const [groupName, setGroupName] = useState("");
   const [error, setError] = useState("");
+
+  // Invitees often aren't signed in yet — send them to login/signup and
+  // bounce back here afterwards instead of failing with "Not authenticated".
+  useEffect(() => {
+    const supabase = createAuthBrowserClient();
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.replace(`/login?next=${encodeURIComponent(`/join/${token}`)}`);
+      }
+    });
+  }, [router, token]);
 
   async function handleJoin() {
     setState("joining");

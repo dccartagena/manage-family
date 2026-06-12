@@ -5,6 +5,12 @@ import { createAuthServerClient } from "@/lib/supabase";
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
+  // Same-origin return path (e.g. /join/<token> from an invite link).
+  const nextParam = searchParams.get("next");
+  const next =
+    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
+      ? nextParam
+      : "/dashboard";
 
   if (!code) {
     return NextResponse.redirect(`${origin}/error?reason=missing_code`);
@@ -34,5 +40,5 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     console.error("person/sync failed", syncResponse.status, await syncResponse.text());
   }
 
-  return NextResponse.redirect(`${origin}/dashboard`);
+  return NextResponse.redirect(`${origin}${next}`);
 }
