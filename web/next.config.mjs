@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: "standalone",
   webpack: (config) => {
     // Alias @undecaf/zbar-wasm to the self-contained inlined variant (WASM bundled
     // as base64 — no separate .wasm file needed at runtime). Using an alias rather
@@ -15,23 +14,6 @@ const nextConfig = {
       ).pathname,
     };
     return config;
-  },
-  async headers() {
-    return [
-      {
-        source: "/sw.js",
-        headers: [
-          {
-            key: "Service-Worker-Allowed",
-            value: "/",
-          },
-          {
-            key: "Cache-Control",
-            value: "no-cache",
-          },
-        ],
-      },
-    ];
   },
 };
 

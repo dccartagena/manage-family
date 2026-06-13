@@ -9,7 +9,6 @@ const PUBLIC_PATHS = [
   "/_next/",
   "/favicon.ico",
   "/manifest.webmanifest",
-  "/sw.js",
   "/icons/",
 ];
 

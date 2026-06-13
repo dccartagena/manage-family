@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
-import Script from "next/script";
 import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
 import { InstallPrompt } from "@/components/InstallPrompt";
@@ -59,13 +58,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <main className="pb-16">{children}</main>
         {user && <BottomNav />}
         {user && <InstallPrompt />}
-        <Script id="sw-register" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.register('/sw.js').catch(console.error);
-            }
-          `}
-        </Script>
       </body>
     </html>
   );
