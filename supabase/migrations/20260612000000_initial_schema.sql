@@ -1,12 +1,11 @@
--- Household Manager — complete schema (alembic revisions 0001 + 0002 consolidated).
+-- Household Manager — complete database schema (single source of truth).
 --
 -- Apply it either way:
 --   * Supabase dashboard → SQL Editor → paste this file → Run, or
 --   * supabase CLI: `supabase db push` (this file lives in supabase/migrations/).
 --
 -- The script is idempotent: safe to re-run on a database where it already ran.
--- It also stamps alembic_version so `alembic upgrade head` becomes a no-op if
--- you later switch to alembic-managed migrations.
+-- Schema changes are made by adding new timestamped .sql files to this directory.
 
 create extension if not exists pgcrypto;
 
@@ -346,14 +345,3 @@ create policy inventory_items_group_member on inventory_items for all
 drop policy if exists product_cache_read on product_cache;
 create policy product_cache_read on product_cache for select
     using (auth.uid() is not null);
-
--- ============================================================================
--- Alembic stamp — marks revisions 0001 and 0002 as applied
--- ============================================================================
-
-create table if not exists alembic_version (
-    version_num varchar(32) not null primary key
-);
-insert into alembic_version (version_num)
-values ('0002')
-on conflict do nothing;

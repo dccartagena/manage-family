@@ -101,9 +101,8 @@ or `supabase start` for a fully local stack).
 cd api
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env            # fill in values
-alembic upgrade head            # apply schema (skip if you ran the SQL file)
-uvicorn api.main:app --reload --port 8000   # run from the repo root
+cp .env.example .env            # fill in values (schema comes from the SQL file, step 1.2)
+cd .. && uvicorn api.main:app --reload --port 8000
 
 # Web (second terminal)
 cd web
@@ -124,13 +123,9 @@ cd web && npm test
 
 ## Database migrations
 
-The canonical schema lives in two equivalent places — keep them in sync:
-
-- `supabase/migrations/*.sql` — applied via the Supabase SQL Editor or CLI (recommended).
-- `api/migrations/versions/*.py` — Alembic, for local/incremental workflows
-  (`alembic upgrade head`; reads `POSTGRES_URL` or `DATABASE_URL`).
-
-The SQL baseline stamps `alembic_version`, so either path can be used interchangeably.
+The schema lives in `supabase/migrations/*.sql` — plain SQL, applied via the
+Supabase SQL Editor or `supabase db push`. To change the schema, add a new
+timestamped `.sql` file (existing files are idempotent and safe to re-run).
 
 ## Project structure
 
@@ -141,8 +136,7 @@ api/                  FastAPI app (one Vercel serverless function)
 ├── db.py             Engine (NullPool for serverless) + session dependency
 ├── models.py         SQLModel table definitions
 ├── requirements.txt  Runtime deps for Vercel (mirror of pyproject.toml)
-├── routers/          One file per resource
-└── migrations/       Alembic migration scripts
+└── routers/          One file per resource
 
 web/                  Next.js 14 PWA
 ├── src/app/          App Router pages
